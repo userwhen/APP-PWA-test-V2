@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SelfQuest V300 Fixed</title>
+    <title>SelfQuest V300 Final</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style105.css?v=300.40">
+    <link rel="stylesheet" href="css/style105.css?v=300.50">
     <link rel="manifest" href="./manifest.json">
 </head>
 <body>
@@ -15,7 +15,7 @@
 <div id="app-frame">
     <div id="hud">
         <div class="hud-left">
-            <div class="avatar" id="hud-avatar"></div>
+            <div class="avatar" id="hud-avatar" onclick="act.navigate(GlobalState.settings.mode==='basic'?'stats':'main')"></div>
             <div class="hud-info">
                 <div class="name">Commander</div>
                 <div class="lv-exp-row">
@@ -36,26 +36,6 @@
         </div>
     </div>
 
-    <div id="stats-overlay">
-        <div class="stats-head"><h2>屬性</h2><button class="btn-close" onclick="act.closeStats()">✕</button></div>
-        <div class="stats-body">
-            <div class="chart-box"><canvas id="radar"></canvas></div>
-            <div class="tabs">
-                <button class="tab active" onclick="act.switchTab('attr')" id="tb-attr">能力</button>
-                <button class="tab" onclick="act.switchTab('cal')" id="tb-cal">狀態</button>
-            </div>
-            <div id="sec-attr" class="stat-sec active">
-                <div id="attr-list"></div>
-                <div id="skill-list" style="margin-top:10px"></div>
-            </div>
-            <div id="sec-cal" class="stat-sec">
-                <div class="cal-card cal-show"><div>今日熱量</div><div class="cal-value"><span id="ui-cal-val">0</span> / <span id="ui-cal-max">2000</span></div></div>
-                <div id="cal-logs" class="cal-show" style="margin-top:10px;font-size:0.9rem;color:#888;"></div>
-                <div class="cal-hide-hint" style="text-align:center;color:#666;margin-top:20px;display:none">(卡路里模式已關閉)</div>
-            </div>
-        </div>
-    </div>
-
     <div id="content-area">
         
         <div id="page-task" class="page">
@@ -72,22 +52,16 @@
             <div id="task-list"></div>
         </div>
 
-        <div id="page-history" class="page history-theme">
-            <div class="page-header"><h2 class="page-title" style="color:#b0a48f;">歷史紀錄</h2><button class="btn-bg" style="padding:5px 15px;" onclick="act.navigate('task')">↩ 返回</button></div>
-            <div id="history-list"></div>
-        </div>
-
         <div id="page-main" class="page active">
             <div class="main-scene">
                 <div class="quick-icons" id="main-icons" style="position: absolute; top: 20px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 10px;">
-                    <button class="icon-btn" id="btn-q-task" onclick="act.openModal('quick')">📝</button>
-                    <button class="icon-btn" id="btn-q-bag" onclick="act.openModal('bag')">🎒</button>
-                    <button class="icon-btn" id="btn-q-avatar" onclick="act.navigate('avatar')">👗</button>
-                    <button class="icon-btn" id="btn-q-qa" onclick="act.showQA()">❓</button>
+                    <button class="icon-btn" onclick="act.openModal('quick')">📝</button>
+                    <button class="icon-btn" onclick="act.openModal('bag')">🎒</button>
+                    <button class="icon-btn" onclick="act.navigate('avatar')">👗</button>
+                    <button class="icon-btn" onclick="act.showQA()">❓</button>
                 </div>
-
                 <div class="char-stage" id="lobby-stage">
-                    <div class="char-container" onclick="act.openStats()"><div class="char-placeholder">🦸</div><div class="click-hint">點擊查看屬性</div></div>
+                    <div class="char-container" onclick="act.navigate('stats')"><div class="char-placeholder">🦸</div><div class="click-hint">點擊查看屬性</div></div>
                 </div>
                 <button class="btn-story" id="btn-story-mode" onclick="act.enterStoryMode()">🌀 劇情模式</button>
             </div>
@@ -98,9 +72,38 @@
             <div class="npc-box"><div class="npc-face"></div><div class="npc-text" id="shop-npc-text">歡迎光臨...</div></div>
             <div class="shop-top-row">
                 <div class="cat-scroll-wrapper"><div class="cat-scroll-container" id="shop-tabs"></div></div>
-                <button class="btn-xs" style="flex-shrink:0; height:38px;" onclick="act.openUpload()">+ 上架商品</button>
+                <button class="btn-xs" style="flex-shrink:0; height:38px;" onclick="act.openUpload()">+ 上架</button>
             </div>
             <div class="shop-container-box"><div class="shop-grid" id="shop-list"></div></div>
+        </div>
+
+        <div id="page-stats" class="page">
+            <div class="stats-head"><h2>屬性與狀態</h2></div>
+            <div class="stats-body">
+                <div class="chart-box"><canvas id="radar"></canvas></div>
+                <div class="tabs">
+                    <button class="tab active" onclick="act.switchTab('attr')" id="tb-attr">能力</button>
+                    <button class="tab" onclick="act.switchTab('cal')" id="tb-cal">狀態</button>
+                </div>
+                <div id="sec-attr" class="stat-sec active">
+                    <div id="attr-list"></div>
+                    <div class="row" style="margin-top:15px; justify-content:space-between; align-items:center;">
+                        <h3 style="font-size:1rem; margin:0;">技能熟練度</h3>
+                        <button class="btn-xs" onclick="act.openAddSkill()">+ 新增技能</button>
+                    </div>
+                    <div id="skill-list" style="margin-top:10px"></div>
+                </div>
+                <div id="sec-cal" class="stat-sec">
+                    <div class="cal-card cal-show"><div>今日熱量</div><div class="cal-value"><span id="ui-cal-val">0</span> / <span id="ui-cal-max">2000</span></div></div>
+                    <div id="cal-logs" class="cal-show" style="margin-top:10px;font-size:0.9rem;color:#888;"></div>
+                    <div class="cal-hide-hint" style="text-align:center;color:#666;margin-top:20px;display:none">(卡路里模式已關閉)</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-history" class="page history-theme">
+            <div class="page-header"><h2 class="page-title" style="color:#b0a48f;">歷史紀錄</h2><button class="btn-bg" style="padding:5px 15px;" onclick="act.navigate('task')">↩ 返回</button></div>
+            <div id="history-list"></div>
         </div>
     </div>
 
@@ -123,7 +126,7 @@
     </div>
 
     <div id="page-avatar">
-        <button class="btn-back-tr" onclick="act.navigate('main')">↩ 返回</button>
+        <button class="btn-back-tr" onclick="act.navigate('main')">↩ 離開</button>
         <div class="avatar-top-stage"><div class="char-placeholder" id="avatar-preview-char">🦸</div></div>
         <div class="avatar-bottom-panel">
             <div class="avatar-tabs" id="wardrobe-tabs">
@@ -140,9 +143,7 @@
 
     <div id="m-create" class="mask">
         <div class="modal">
-            <div class="m-head">
-                任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button>
-            </div>
+            <div class="m-head">任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button></div>
             <div class="m-body">
                 <div class="row row-center mb-0">
                     <input id="nt-title" class="inp flex-1 mb-0" placeholder="任務標題">
@@ -158,10 +159,13 @@
                         <option value="待辦" selected>待辦事項</option>
                         <option value="願望">願望清單</option>
                     </select>
-                    <select id="nt-type" class="inp flex-1" style="border-left:none;">
-                        <option value="normal">一般任務</option>
-                        <option value="count">計次任務</option>
-                    </select>
+                    <div class="flex-1" style="display:flex; gap:5px;">
+                        <select id="nt-type" class="inp" style="flex:1; border-left:none;" onchange="act.toggleTaskType(this.value)">
+                            <option value="normal">一般</option>
+                            <option value="count">計次</option>
+                        </select>
+                        <input id="nt-target" type="tel" class="inp" style="width:60px; display:none; text-align:center;" placeholder="次" maxlength="2" oninput="act.validateNumber(this, 99)">
+                    </div>
                 </div>
 
                 <div class="row row-center" style="justify-content:space-between; margin-top:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
@@ -172,44 +176,35 @@
                 
                 <div class="box-gray mt-md">
                     <div class="row row-center" style="justify-content:space-between;">
-                        <label class="lbl" style="margin:0">難度: <span id="nt-diff-label" style="font-weight:bold; color:#4db6ac">中等 (M)</span></label>
+                        <label class="lbl" style="margin:0">難度: <span id="nt-diff-label" style="font-weight:bold; color:#4db6ac">中等</span></label>
                     </div>
                     <input type="range" id="nt-diff-range" min="1" max="4" value="2" class="slider" oninput="act.updateDiffLabel(this.value)">
                     
                     <div class="row mt-sm row-center">
-                        <label class="lbl" style="margin:0; margin-right:10px;">屬性:</label>
-                        <select id="nt-attr-select" class="inp flex-1" style="margin:0;">
-                            <option value="">(無)</option>
-                            <option value="str">💪 體能</option>
-                            <option value="int">🧠 智慧</option>
-                            <option value="vit">🔥 毅力</option>
-                            <option value="chr">✨ 魅力</option>
-                            <option value="dex">👐 靈巧</option>
-                            <option value="luc">🍀 幸運</option>
+                        <label class="lbl" style="margin:0; margin-right:10px;">技能:</label>
+                        <select id="nt-skill-select" class="inp flex-1" style="margin:0;">
+                            <option value="" disabled selected>選擇任務標籤(技能)...</option>
                         </select>
                     </div>
                 </div>
                 
                 <label class="lbl" style="margin-top:15px; color:#aaa; font-size:0.8rem;">進階設定</label>
-                <div class="row">
-                    <input type="datetime-local" id="nt-deadline" class="inp flex-1">
-                    <input id="nt-target" type="tel" class="inp flex-1" style="display:none;" placeholder="目標次數">
-                </div>
+                <div class="row"><input type="datetime-local" id="nt-deadline" class="inp flex-1"></div>
             </div>
-            <div class="m-foot">
-                <button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button>
-            </div>
+            <div class="m-foot"><button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button></div>
         </div>
     </div>
 
-    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式 (預設)</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" onchange="act.toggleCalMode()" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
+    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式 (預設)</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
     
+    <div id="m-add-skill" class="mask"><div class="modal no-head" style="width:85%;"><div class="m-body"><label class="lbl">新增技能標籤</label><input id="new-skill-name" class="inp" placeholder="技能名稱 (例: 跑酷)"><label class="lbl">對應屬性</label><select id="new-skill-attr" class="inp"><option value="str">💪 體能</option><option value="int">🧠 智慧</option><option value="vit">🔥 毅力</option><option value="chr">✨ 魅力</option><option value="dex">👐 靈巧</option><option value="luc">🍀 幸運</option></select><p style="font-size:0.8rem;color:#888;">上限 10 個技能，請謹慎規劃。</p></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('add-skill')">取消</button><button class="btn-ok" onclick="act.submitNewSkill()">確定</button></div></div></div>
+
+    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-body"><input id="up-name" class="inp" placeholder="商品名稱"><textarea id="up-desc" class="inp" placeholder="描述/備註"></textarea><select id="up-cat" class="inp" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option><option value="時間">時間</option><option value="金錢">金錢</option><option value="其他">其他</option></select><div id="up-dyn-fields"></div><input id="up-price" class="inp" placeholder="價格" type="tel"><input id="up-qty" class="inp" placeholder="庫存 (99為無限)" type="tel"><select id="up-perm" class="inp"><option value="once">單次</option><option value="daily">常駐 (每日補貨)</option></select></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
+
     <div id="m-bag" class="mask"><div class="modal"><div class="m-head">背包 <button class="btn-close" onclick="act.closeModal('bag')">✕</button></div><div class="m-body shop-grid" id="bag-grid"></div></div></div>
     <div id="m-quick" class="mask"><div class="modal"><div class="m-head">每日快覽 <button class="btn-close" onclick="act.closeModal('quick')">✕</button></div><div class="m-body" id="quick-list"></div></div></div>
     <div id="m-bag-detail" class="mask" style="z-index:2200"><div class="modal no-head"><div class="m-body"><input id="bd-name" class="inp" readonly><textarea id="bd-desc" class="inp inp-area" readonly></textarea><div class="row"><input id="bd-qty" class="inp"><button class="btn-ok" onclick="act.useItem(false)">使用</button><button class="btn-del" onclick="act.useItem(true)">丟棄</button></div></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('bag-detail')">關閉</button></div></div></div>
-    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-body"><input id="up-name" class="inp"><textarea id="up-desc" class="inp"></textarea><select id="up-cat" class="inp" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option></select><div id="up-dyn-fields"></div><input id="up-price" class="inp"><input id="up-qty" class="inp"><select id="up-perm" class="inp"><option value="once">單次</option></select></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
-    <div id="m-skill-edit" class="mask"><div class="modal"><div class="m-body"><input id="sk-name" class="inp"></div><div class="m-foot"><button class="btn-ok" onclick="act.saveSkill()">儲存</button><button class="btn-del" onclick="act.deleteSkill()">刪除</button></div></div></div>
-    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-body"><input id="na-title" class="inp"></div><div class="m-foot"><button class="btn-ok" onclick="act.submitAchievement()">儲存</button></div></div></div>
+    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-body"><input id="na-title" class="inp" placeholder="成就名稱"><div class="m-foot"><button class="btn-ok" onclick="act.submitAchievement()">儲存</button><button class="btn-bg" onclick="act.closeModal('create-ach')">取消</button></div></div></div></div>
 
 </div>
 
@@ -222,7 +217,7 @@
 <script src="js/modules/shop105.js"></script>
 <script src="js/modules/story105.js"></script> 
 <script src="js/modules/avatar105.js"></script> 
-<script src="js/main105.js?v=10.4"></script>
+<script src="js/main105.js?v=10.5"></script>
 
 <script>
 (function() {
@@ -231,9 +226,23 @@
         if (originalChangeMode) originalChangeMode(mode);
         document.body.classList.remove('mode-adventurer', 'mode-harem', 'mode-basic');
         document.body.classList.add('mode-' + mode);
+        
+        // ★ 基礎模式：導航列大廳改為屬性，預設跳轉 ★
+        const navMain = document.getElementById('nav-main');
+        if (mode === 'basic') {
+            navMain.innerHTML = '📊 屬性';
+            navMain.onclick = () => act.navigate('stats');
+            // 如果當前在大廳，強制跳轉屬性
+            if (document.getElementById('page-main').classList.contains('active')) {
+                act.navigate('stats');
+            }
+        } else {
+            navMain.innerHTML = '🏠 大廳';
+            navMain.onclick = () => act.navigate('main');
+        }
     };
     const selectEl = document.getElementById('set-mode');
-    if(selectEl) document.body.classList.add('mode-' + selectEl.value);
+    if(selectEl && window.act.changeMode) window.act.changeMode(selectEl.value);
 })();
 </script>
 

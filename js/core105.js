@@ -1,8 +1,7 @@
-/* js/core105.js - V300.41 Fixed & Features */
+/* js/core105.js - V300.50 Logic Refined */
 
 const act = {
-    // --- 基礎介面功能 ---
-    // ★ 修復：補上這些 helper，讓上架、新增技能等按鈕能運作 ★
+    // Helper
     alert: (msg) => alert(msg), 
     confirm: (msg, cb) => { if(confirm(msg)) cb(true); },
     prompt: (msg, def, cb) => { const r = prompt(msg, def); if(r!==null) cb(r); },
@@ -11,70 +10,99 @@ const act = {
     navigate: (p) => { 
         document.querySelectorAll('.page').forEach(e=>e.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); 
-        const pg=document.getElementById('page-'+p); 
-        if(pg) pg.classList.add('active'); 
-        const btn=document.getElementById('nav-'+p); 
-        if(btn) btn.classList.add('active'); 
-        if(p==='main') view.renderHUD(); 
         
-        // ★ 核心修改：FAB 只在「任務頁」顯示 ★
+        const pg = document.getElementById('page-'+p); 
+        if(pg) pg.classList.add('active'); 
+        
+        // 導航列高亮處理 (Stats頁面視同Main按鈕)
+        const btnId = (p==='stats' && GlobalState.settings.mode==='basic') ? 'nav-main' : 'nav-'+p;
+        const btn = document.getElementById(btnId); 
+        if(btn) btn.classList.add('active'); 
+        
+        if(p==='main' || p==='stats') view.renderHUD(); 
+        
+        // ★ FAB 控制：只在任務頁、成就頁顯示 ★
         const fab = document.getElementById('global-fab');
-        if(fab) fab.style.display = (p === 'task') ? 'flex' : 'none';
+        if(fab) {
+            const isTaskPage = (p === 'task');
+            fab.style.display = isTaskPage ? 'flex' : 'none';
+        }
     },
     
     openModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='flex'; m.classList.add('active'); } },
     closeModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='none'; m.classList.remove('active'); } },
 
-    // --- FAB 按鈕行為 ---
+    // ★ FAB 智慧判斷 ★
     handleFab: () => {
-        // 重置輸入框
+        // 如果在成就分頁
+        if (TempState.taskTab === 'ach') {
+            if(window.act.openCreateAch) window.act.openCreateAch(); // 呼叫 ach105.js
+            else act.openModal('create-ach');
+            return;
+        }
+        
+        // 一般任務建立
         document.getElementById('nt-title').value = '';
         document.getElementById('nt-desc').value = '';
-        
-        // 重置拉桿 (預設 2=中等)
         const diffSlider = document.getElementById('nt-diff-range');
         if(diffSlider) { diffSlider.value = 2; act.updateDiffLabel(2); }
+        document.getElementById('nt-skill-select').value = '';
+        document.getElementById('nt-target').value = '';
+        document.getElementById('nt-subs').innerHTML = '';
         
-        // 重置屬性選擇
-        document.getElementById('nt-attr-select').value = '';
-        
-        const subBox = document.getElementById('nt-subs');
-        if(subBox) subBox.innerHTML = '';
+        // 更新技能下拉選單
+        act.refreshSkillSelect();
         
         act.openModal('create');
     },
 
-    // --- 難度拉桿連動顯示 ---
+    // 刷新任務視窗的技能選單
+    refreshSkillSelect: () => {
+        const sel = document.getElementById('nt-skill-select');
+        if(!sel) return;
+        sel.innerHTML = '<option value="" disabled selected>選擇任務標籤(技能)...</option>';
+        GlobalState.skills.forEach(s => {
+            // 顯示: 跑酷 (體能)
+            const attrName = GlobalState.attrs[s.parent] ? GlobalState.attrs[s.parent].name : '未知';
+            sel.innerHTML += `<option value="${s.name}">${s.name} (${attrName})</option>`;
+        });
+    },
+
     updateDiffLabel: (val) => {
         const def = DIFFICULTY_DEFS[val];
         const lbl = document.getElementById('nt-diff-label');
         if(def && lbl) {
-            lbl.innerText = `${def.label} (${def.code})`;
+            lbl.innerText = `${def.label}`; // 去除代碼，只留中文
             lbl.style.color = def.color;
         }
     },
+    
+    toggleTaskType: (val) => {
+        const tgt = document.getElementById('nt-target');
+        if(tgt) tgt.style.display = (val === 'count') ? 'block' : 'none';
+    },
 
-    // --- 任務提交 (適應新介面) ---
+    // 任務提交
     submitTask: () => {
         const title = document.getElementById('nt-title').value.trim();
         if (!title) return act.alert('請輸入標題');
         
-        // ★ 讀取拉桿與屬性 ★
         const diffVal = parseInt(document.getElementById('nt-diff-range').value) || 2; 
-        const attrKey = document.getElementById('nt-attr-select').value; // 'str', 'int' etc.
+        const skillName = document.getElementById('nt-skill-select').value; 
         const catSelect = document.getElementById('nt-cat-select').value;
         const typeSelect = document.getElementById('nt-type').value;
+        const targetVal = typeSelect === 'count' ? (parseInt(document.getElementById('nt-target').value) || 1) : 1;
         
         const newTask = {
             id: Date.now().toString(),
             title: title,
             desc: document.getElementById('nt-desc').value,
             type: typeSelect,
-            target: 1, // 計次預設 1，若有輸入框可再讀取
+            target: targetVal,
             curr: 0,
             
-            attr: attrKey, // 綁定屬性 ID
-            difficulty: diffVal, // 儲存數字 1-4
+            skill: skillName, 
+            difficulty: diffVal,
             cat: catSelect,
             
             pinned: document.getElementById('nt-pinned').checked,
@@ -84,7 +112,6 @@ const act = {
             created: new Date().toISOString()
         };
 
-        // 讀取子任務
         const subInputs = document.querySelectorAll('#nt-subs input');
         subInputs.forEach(inp => {
             if(inp.value.trim()) newTask.subs.push({ text: inp.value.trim(), done: false });
@@ -96,7 +123,6 @@ const act = {
         view.renderTasks();
     },
 
-    // --- 任務完成 ---
     toggleTask: (id) => {
         const t = GlobalState.tasks.find(x => x.id === id);
         if (!t) return;
@@ -115,23 +141,27 @@ const act = {
                 act.alert(`🆙 主角等級提升！ Lv.${GlobalState.lv}`); 
             }
 
-            // ★ 屬性提升 (直接對應 6 大屬性) ★
+            // 技能與屬性提升
             let attrMsg = "";
-            if (t.attr && GlobalState.attrs[t.attr]) {
-                const attr = GlobalState.attrs[t.attr];
-                attr.exp += reward.exp;
-                attrMsg = ` | ${attr.icon} ${attr.name} Exp+${reward.exp}`;
-                
-                if (attr.exp >= attr.v * 100) { 
-                    attr.exp -= attr.v * 100; 
-                    attr.v++; 
-                    act.alert(`🎉 [${attr.name}] 提升到 Lv.${attr.v}！`); 
+            if (t.skill) {
+                let skill = GlobalState.skills.find(s => s.name === t.skill);
+                if (skill) {
+                    skill.lastUsed = new Date().toISOString();
+                    const parentAttr = GlobalState.attrs[skill.parent];
+                    if(parentAttr) {
+                        parentAttr.exp += reward.exp;
+                        attrMsg = ` | ${parentAttr.icon} ${skill.name} Exp+${reward.exp}`;
+                        if (parentAttr.exp >= parentAttr.v * 100) { 
+                            parentAttr.exp -= parentAttr.v * 100; 
+                            parentAttr.v++; 
+                            act.alert(`🎉 [${parentAttr.name}] 提升到 Lv.${parentAttr.v}！`); 
+                        }
+                    }
                 }
             }
             
             const critMsg = reward.isCrit ? " 🔥 大成功！" : "";
             act.addLog(`完成: ${t.title}`, `💰+${reward.gold}${attrMsg}${critMsg}`);
-            
             if(reward.isCrit) act.alert(`🎲 運氣爆棚！${t.title} 大成功！`);
 
         } else {
@@ -147,16 +177,13 @@ const act = {
         const def = DIFFICULTY_DEFS[diffVal] || DIFFICULTY_DEFS[2];
         let gold = Math.floor(def.baseGold * ((Math.random() * 0.4) + 0.8));
         let exp = def.baseExp;
-        
-        // 幸運加成
         const luc = (GlobalState.attrs && GlobalState.attrs.luc) ? GlobalState.attrs.luc.v : 1;
-        const critChance = 0.05 + (luc * 0.01); 
-        const isCrit = Math.random() < critChance;
-        
+        const isCrit = Math.random() < (0.05 + (luc * 0.01));
         if (isCrit) { gold *= 2; exp = Math.floor(exp * 1.5); }
         return { gold, exp, isCrit };
     },
 
+    // ★ 新增子任務 (含刪除按鈕) ★
     addSubtask: () => {
         const div = document.getElementById('nt-subs');
         if(!div) return;
@@ -172,34 +199,38 @@ const act = {
         if(t && t.subs[sIdx]) { t.subs[sIdx].done = !t.subs[sIdx].done; act.save(); view.renderTasks(); }
     },
 
-    // 設定與存檔
+    // ★ 設定修復 ★
     saveSettings: () => {
         const mode = document.getElementById('set-mode').value;
         GlobalState.settings.mode = mode;
         GlobalState.settings.calMode = document.getElementById('set-cal-mode').checked;
         GlobalState.settings.strictMode = document.getElementById('set-strict-mode').checked;
         
-        if(window.act.changeMode) window.act.changeMode(mode);
         act.save();
         act.closeModal('settings');
-        act.alert("設定已儲存");
-        location.reload(); 
+        act.alert("設定已儲存 (部分變更需重整)");
+        
+        if(window.act.changeMode) window.act.changeMode(mode);
+        view.renderHUD(); // 更新介面狀態
     },
     
-    // 商店上架分類切換
     uploadCategoryChange: () => { 
+        // 呼叫 shop105.js 的功能，若有載入
+        if(window.act.shopUploadChange) window.act.shopUploadChange();
+        else if(window.act.shopLibUploadChange) window.act.shopLibUploadChange();
+        // Fallback in core
         const c = document.getElementById('up-cat').value; 
         const dyn = document.getElementById('up-dyn-fields');
         if(!dyn) return;
         dyn.innerHTML = '';
-        if (c === '熱量') { dyn.innerHTML = `<div class="row"><input id="up-cal" type="tel" class="inp flex-1" placeholder="卡路里" oninput="act.validateNumber(this, 9999)"></div>`; } 
-        else if (c === '時間') { dyn.innerHTML = `<div class="row"><input id="up-time-h" type="tel" class="inp flex-1" placeholder="時"><input id="up-time-m" type="tel" class="inp flex-1" placeholder="分"></div>`; } 
+        if (c === '熱量') { dyn.innerHTML = `<div class="row"><input id="up-cal" type="tel" class="inp flex-1" placeholder="卡路里 (4位數)" maxlength="4" oninput="act.validateNumber(this, 9999)"></div>`; } 
+        else if (c === '時間') { dyn.innerHTML = `<div class="row"><input id="up-time-h" type="tel" class="inp flex-1" placeholder="時 (0-23)" maxlength="2" oninput="act.validateNumber(this, 23)"><input id="up-time-m" type="tel" class="inp flex-1" placeholder="分 (0-59)" maxlength="2" oninput="act.validateNumber(this, 59)"></div>`; } 
+        else if (c === '金錢') { dyn.innerHTML = `<div class="row"><input id="up-money" type="tel" class="inp flex-1" placeholder="獲得金額" oninput="act.validateNumber(this, 99999)"></div>`; }
     },
     
     validateNumber: (el, max) => {
         let v = parseInt(el.value);
-        if(isNaN(v)) v = '';
-        else if(max && v > max) v = max;
+        if(isNaN(v)) v = ''; else if(max && v > max) v = max;
         el.value = v;
     },
 
@@ -210,11 +241,8 @@ const act = {
     showQA: () => act.alert("Q&A 功能開發中"),
     
     // Stats 
-    openStats: () => { 
-        const el = document.getElementById('stats-overlay'); 
-        if(el) { el.style.display = 'flex'; if(window.view && view.renderStats) view.renderStats(); }
-    },
-    closeStats: () => { document.getElementById('stats-overlay').style.display = 'none'; },
+    openStats: () => { act.navigate('stats'); },
+    closeStats: () => { act.navigate('main'); }, // 離開屬性頁回到大廳
     switchTab: (t) => { 
         document.querySelectorAll('.tab').forEach(e => e.classList.remove('active')); document.getElementById('tb-'+t).classList.add('active'); 
         document.querySelectorAll('.stat-sec').forEach(e => e.classList.remove('active')); document.getElementById('sec-'+t).classList.add('active'); 
