@@ -1,4 +1,4 @@
-/* js/modules/stats105.js - V300.70 Skill Fix */
+/* js/modules/stats105.js - V300.90 Final */
 window.act = window.act || {};
 
 Object.assign(window.act, {

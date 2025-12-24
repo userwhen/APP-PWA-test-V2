@@ -1,4 +1,4 @@
-/* js/modules/shop105.js - V300.80 Fixed */
+/* js/modules/shop105.js - V300.90 Complete */
 window.act = window.act || {};
 const SHOP_CONFIG = { INFINITE_QTY: 99, MAX_INPUT: 99999, PERM_TYPE: { DAILY: 'daily', ONCE: 'once' }, CATEGORY: { CALORIE: '熱量', MONEY: '金錢', TIME: '時間', OTHER: '其他' } };
 
@@ -15,6 +15,33 @@ Object.assign(window.act, {
     },
 
     findShopItem: (id) => GlobalState.shop.user.find(i => i.id === id) || GlobalState.shop.npc.find(i => i.id === id),
+    getItemDef: (name) => [...GlobalState.shop.npc, ...GlobalState.shop.user].find(i => i.name === name),
+    countItem: (name) => GlobalState.bag.filter(i => i.name === name).length,
+    getItemEffectText: (def, qty) => { 
+        if (!def) return '使用此道具'; 
+        const total = (Number(def.val) || 0) * qty; 
+        switch (def.category) { 
+            case SHOP_CONFIG.CATEGORY.CALORIE: return `將攝取 ${total} 卡路里`; 
+            case SHOP_CONFIG.CATEGORY.MONEY: return `將獲得 ${total} 金幣`; 
+            case SHOP_CONFIG.CATEGORY.TIME: return `將消耗/獲得時間 ${def.val}`; 
+            default: return def.desc || '使用此道具'; 
+        } 
+    },
+    
+    addToBag: (itemTemplate, quantity) => { for (let i = 0; i < quantity; i++) GlobalState.bag.push({ ...itemTemplate, uid: Date.now() + Math.random() }); },
+    removeFromBag: (itemName, quantity) => { let removed = 0; const newBag = []; let toRemove = quantity; for (let item of GlobalState.bag) { if (item.name === itemName && toRemove > 0) { toRemove--; removed++; } else { newBag.push(item); } } GlobalState.bag = newBag; return removed; },
+    applyItemEffect: (itemDef, quantity) => { 
+        if (!itemDef) return; 
+        if (itemDef.category === SHOP_CONFIG.CATEGORY.CALORIE) { 
+            if (!GlobalState.settings.calMode) return; 
+            const val = Number(itemDef.val) * quantity; 
+            GlobalState.cal.today += val; 
+            GlobalState.cal.logs.push(`[攝取] ${itemDef.name} +${val}`); 
+        } else if (itemDef.category === SHOP_CONFIG.CATEGORY.MONEY) { 
+            const val = (Number(itemDef.val) || 0) * quantity; 
+            GlobalState.gold += val; 
+        } 
+    },
 
     buy: (item) => {
         const shopItem = act.findShopItem(item.id);
@@ -53,7 +80,6 @@ Object.assign(window.act, {
                 act.save();
                 if(window.view && view.renderHUD) view.renderHUD();
                 act.closeModal('bag-detail');
-                // 刷新背包介面 (如果存在)
                 const grid = document.getElementById('bag-grid');
                 if(grid && window.view && view.renderBag) view.renderBag(); 
             }
@@ -62,11 +88,14 @@ Object.assign(window.act, {
 
     openUpload: () => { 
         TempState.editShopId = null; 
-        ['up-name', 'up-desc', 'up-price', 'up-qty'].forEach(id => document.getElementById(id).value = '');
+        // 確保 core.js 的 clearInputs 存在，或手動清除
+        document.querySelectorAll('#m-upload input, #m-upload textarea').forEach(e => e.value='');
         document.getElementById('up-dyn-fields').innerHTML = ''; 
         document.getElementById('btn-del-shop').style.display = 'none'; 
+        
         const catSel = document.getElementById('up-cat');
         if(catSel) { catSel.value = '熱量'; act.shopUploadChange(); }
+        
         act.openModal('upload'); 
     },
 
@@ -78,13 +107,13 @@ Object.assign(window.act, {
         if (cat === '熱量') val = document.getElementById('up-cal')?.value || 0;
         if (cat === '金錢') val = document.getElementById('up-money')?.value || 0;
         if (cat === '時間') { const h = document.getElementById('up-time-h')?.value.padStart(2,'0')||'00'; const m = document.getElementById('up-time-m')?.value.padStart(2,'0')||'00'; val = `${h}:${m}`; }
-        const item = { id: TempState.editShopId || Date.now().toString(), name: n, price: Number(p), qty: Number(document.getElementById('up-qty').value)||1, category: cat, perm: document.getElementById('up-perm').value, desc: document.getElementById('up-desc').value, val: val };
+        const item = { id: TempState.editShopId || act.generateId('user_shop'), name: n, price: Number(p), qty: Number(document.getElementById('up-qty').value)||1, category: cat, perm: document.getElementById('up-perm').value, desc: document.getElementById('up-desc').value, val: val };
         if (TempState.editShopId) { const idx = GlobalState.shop.user.findIndex(i => i.id === TempState.editShopId); if (idx > -1) GlobalState.shop.user[idx] = item; } else { GlobalState.shop.user.push(item); }
         act.closeModal('upload'); act.save();
         if(window.view && view.renderShop) view.renderShop();
     },
     
-editShopItem: (id) => {
+    editShopItem: (id) => {
         const item = GlobalState.shop.user.find(i => i.id === id);
         if (item) {
             TempState.editShopId = id;
@@ -97,7 +126,6 @@ editShopItem: (id) => {
             document.getElementById('btn-del-shop').style.display = 'block';
             
             act.shopUploadChange(); 
-            // 延遲填入動態欄位
             setTimeout(() => {
                 if (item.category === '熱量' && document.getElementById('up-cal')) document.getElementById('up-cal').value = item.val;
                 if (item.category === '金錢' && document.getElementById('up-money')) document.getElementById('up-money').value = item.val;
@@ -105,5 +133,12 @@ editShopItem: (id) => {
             }, 50);
             act.openModal('upload');
         }
+    },
+    deleteShopItem: () => { 
+        act.confirm("下架?", (yes) => { if(yes) { 
+            GlobalState.shop.user = GlobalState.shop.user.filter(i => i.id !== TempState.editShopId); 
+            act.closeModal('upload'); act.save(); 
+            if(window.view && view.renderShop) view.renderShop(); 
+        } }); 
     }
 });

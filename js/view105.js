@@ -1,4 +1,4 @@
-/* js/view105.js - V300.80 Clean Render */
+/* js/view105.js - V300.90 Perfect Render */
 
 const view = {
     render: () => { 
@@ -11,21 +11,47 @@ const view = {
         document.getElementById('ui-gold').innerText = GlobalState.gold; 
         document.getElementById('ui-lv').innerText = GlobalState.lv;
         const mode = GlobalState.settings.mode;
-        document.body.className = ''; // 重置 class
-        document.body.classList.add('mode-' + mode);
+        document.body.className = 'mode-' + mode;
+    },
+
+    // 每日快覽
+    renderQuick: () => {
+        const list = document.getElementById('quick-list');
+        if(!list) return;
+        list.innerHTML = '';
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const tasks = GlobalState.tasks.filter(t => {
+            const isToday = t.deadline && t.deadline.startsWith(todayStr);
+            return (t.cat === '每日') || t.pinned || isToday;
+        });
+        
+        if(tasks.length === 0) { list.innerHTML = '<div style="text-align:center;color:#888;">今日無待辦事項</div>'; return; }
+        
+        tasks.forEach(t => {
+            const div = document.createElement('div');
+            const diffDef = DIFFICULTY_DEFS[t.difficulty] || DIFFICULTY_DEFS[2];
+            div.className = `t-card diff-${t.difficulty}`;
+            div.style.padding = '10px';
+            div.style.borderLeft = `5px solid ${diffDef.color}`;
+            div.innerHTML = `<div style="display:flex;justify-content:space-between;">
+                <span>${t.pinned?'📌 ':''}${t.title}</span>
+                <span style="font-size:0.8rem;color:#666;">${t.done?'(已完成)':'(未完成)'}</span>
+            </div>`;
+            div.onclick = () => { act.closeModal('quick'); act.navigate('task'); };
+            list.appendChild(div);
+        });
     },
 
     renderTasks: () => {
         const list = document.getElementById('task-list'); 
         list.innerHTML = '';
         
-        // ★ 分頁判斷：如果是成就頁，轉去渲染成就 ★
         if (TempState.taskTab === 'ach') {
             view.renderAchievements(list);
             return;
         }
 
-        // 渲染任務分類按鈕
         const cats = ['全部', ...GlobalState.cats];
         const catsRow = document.getElementById('task-cats-row');
         if(catsRow) {
@@ -35,7 +61,6 @@ const view = {
             ).join('');
         }
 
-        // 任務篩選
         let tasks = GlobalState.tasks;
         if (TempState.filterCategory !== '全部') {
             tasks = tasks.filter(t => t.cat === TempState.filterCategory);
@@ -46,13 +71,19 @@ const view = {
         tasks.forEach(t => {
             const div = document.createElement('div');
             const diffDef = DIFFICULTY_DEFS[t.difficulty] || DIFFICULTY_DEFS[2];
-            div.className = `t-card ${t.done ? 'done' : ''} diff-${t.difficulty}`;
+            div.className = `t-card ${t.done ? 'done' : ''}`;
+            div.style.borderLeft = `5px solid ${diffDef.color}`;
             
+            // 進度條 (顯示文字)
             let progressBar = '';
             if (t.subs && t.subs.length > 0) {
                 const doneCount = t.subs.filter(s => s.done).length;
                 const pct = Math.round((doneCount / t.subs.length) * 100);
-                progressBar = `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+                progressBar = `
+                <div class="progress-track" style="position:relative;">
+                    <div class="progress-fill" style="width:${pct}%"></div>
+                    <span style="position:absolute; width:100%; text-align:center; top:-1px; font-size:10px; color:#555;">${pct}%</span>
+                </div>`;
             }
             
             const skillTag = t.skill ? `<span class="skill-pill">${t.skill}</span>` : '';
@@ -62,22 +93,20 @@ const view = {
 
             const countDisplay = t.type === 'count' ? `<span style="font-size:0.8rem;color:#666;margin-left:5px;">(${t.curr}/${t.target})</span>` : '';
             
-            // 任務管理鈕 (自製的才顯示，或全部顯示)
-            const manageBtn = `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.deleteTask('${t.id}')">🗑️</span>`;
+            // 管理按鈕
+            const manageBtn = t.isUser ? `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.deleteTask('${t.id}')">🗑️</span>` : '';
 
             div.innerHTML = `<div class="t-top"><div class="t-title-container" onclick="act.toggleTask('${t.id}')"><div class="chk ${t.done?'checked':''}"></div><div class="t-title">${t.pinned ? '📌 ' : ''}${t.title}${countDisplay}<div style="margin-top:4px;">${diffBadge} ${skillTag}</div></div></div>${manageBtn}</div>${progressBar}${subList}`;
             list.appendChild(div);
         });
     },
 
-    // ★ 成就渲染函式 ★
     renderAchievements: (container) => {
         if (GlobalState.achievements.length === 0) { container.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px">暫無成就</div>'; return; }
         
         GlobalState.achievements.forEach(a => {
             const div = document.createElement('div');
             div.className = `t-card ${a.done?'done':''} ach`;
-            // 成就管理鈕
             const delBtn = a.isSystem ? '' : `<span style="position:absolute; top:5px; right:5px; color:#aaa; cursor:pointer;" onclick="event.stopPropagation();act.manageAchievement('${a.id}')">✏️</span>`;
             
             div.innerHTML = `
@@ -97,7 +126,6 @@ const view = {
         if(!list) return;
         list.innerHTML = '';
         
-        // 渲染分類 Tabs
         const shopTabs = document.getElementById('shop-tabs');
         if(shopTabs) {
             const cats = ['全部', '熱量', '時間', '金錢', '其他'];
@@ -114,7 +142,10 @@ const view = {
         items.forEach(i => {
             const div = document.createElement('div'); 
             div.className = `s-item ${i.qty<=0?'sold-out':''}`;
-            const manageBtn = i.id.startsWith('def_') ? '' : `<span class="s-manage-btn" onclick="event.stopPropagation();act.editShopItem('${i.id}')">✏️</span>`;
+            // 修復管理按鈕邏輯：npc商品不能刪除
+            const isNpc = i.id.startsWith('def_');
+            const manageBtn = isNpc ? '' : `<span class="s-manage-btn" onclick="event.stopPropagation();act.editShopItem('${i.id}')">✏️</span>`;
+            
             div.innerHTML = `${manageBtn}<div>${i.name}</div><div style="color:gold">$${i.price}</div><span style="font-size:0.7rem;color:#888;">剩:${i.qty}</span>`;
             div.onclick = () => { if(window.act.buy) window.act.buy(i); };
             list.appendChild(div);
@@ -142,22 +173,53 @@ const view = {
         const skillList = document.getElementById('skill-list');
         if(skillList) {
             skillList.innerHTML = ''; 
-            GlobalState.skills.forEach(s => {
-                const pAttr = GlobalState.attrs[s.parent];
-                // 生疏視覺效果
-                const rustStyle = s.isRusted ? 'opacity:0.6; filter:grayscale(1); border:1px dashed #aaa;' : '';
-                const rustText = s.isRusted ? '(生疏)' : '';
-                
-                skillList.innerHTML += `
-                <div class="tag-item" style="display:inline-flex; align-items:center; margin:3px; padding-right:5px; ${rustStyle}">
-                    ${pAttr?pAttr.icon:''} ${s.name} ${rustText} <span style="font-size:0.8rem;color:#666;margin-left:4px;">Lv.${s.lv}</span>
-                    <span style="margin-left:5px; color:#d32f2f; cursor:pointer;" onclick="act.deleteSkillByName('${s.name}')">✕</span>
-                </div>`;
-            });
+            // 即使沒技能，若有雷達圖需求也該顯示空白區
+            if (GlobalState.skills.length === 0) {
+                skillList.innerHTML = '<div style="color:#888;font-size:0.9rem;">尚無技能</div>';
+            } else {
+                GlobalState.skills.forEach(s => {
+                    const pAttr = GlobalState.attrs[s.parent];
+                    const rustStyle = s.isRusted ? 'opacity:0.6; filter:grayscale(1); border:1px dashed #aaa;' : '';
+                    const rustText = s.isRusted ? '(生疏)' : '';
+                    
+                    skillList.innerHTML += `
+                    <div class="tag-item" style="display:inline-flex; align-items:center; margin:3px; padding-right:5px; ${rustStyle}">
+                        ${pAttr?pAttr.icon:''} ${s.name} ${rustText} <span style="font-size:0.8rem;color:#666;margin-left:4px;">Lv.${s.lv}</span>
+                        <span style="margin-left:5px; color:#d32f2f; cursor:pointer;" onclick="act.deleteSkillByName('${s.name}')">✕</span>
+                    </div>`;
+                });
+            }
         }
         
-        // 呼叫 Chart.js (略，保持原樣)
-        // ...
+        // 卡路里區塊顯示控制
+        const calSec = document.getElementById('sec-cal');
+        if(calSec) {
+            calSec.style.display = GlobalState.settings.calMode ? 'block' : 'none';
+        }
+
+        const cv = document.getElementById('radar');
+        if(cv && window.Chart) {
+            if(window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(cv, { 
+                type: 'radar', 
+                data: { 
+                    labels: Object.values(GlobalState.attrs).map(a=>a.name), 
+                    datasets:[{ 
+                        label:'能力', 
+                        data:Object.values(GlobalState.attrs).map(a=>a.v), 
+                        backgroundColor:'rgba(0,137,123,0.2)', 
+                        borderColor:'#00897b',
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }] 
+                }, 
+                options: { 
+                    maintainAspectRatio:false, 
+                    scales:{ r:{ grid:{color:'#ccc'}, ticks:{display:false, maxTicksLimit: 5}, pointLabels:{font:{size:14}} } }, 
+                    plugins:{legend:{display:false}} 
+                } 
+            });
+        }
     }
 };
 window.view = view;
