@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SelfQuest V300.29 - Text Inflation Fix (Final UI Lock)
+   SelfQuest V300.31 - Unlocked & UI Update
    ========================================================================== */
 
 /* 1.0 核心變數設定 */
@@ -37,16 +37,15 @@ html, body {
     font-family: var(--font-std);
     line-height: 1.2;
     
-    /* ★★★ 核心修復：禁止瀏覽器自動調整文字大小 ★★★ */
+    /* 禁止文字自動膨脹 */
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
     text-size-adjust: 100%;
     
     display: flex; justify-content: center; align-items: center;
 }
 
-/* 重置按鈕樣式 */
+/* 重置按鈕 */
 button, .nav-item, .menu-btn {
     appearance: none; -webkit-appearance: none;
     border: none; background: transparent; padding: 0; margin: 0;
@@ -132,7 +131,10 @@ body.mode-harem .fab { background: var(--acc); box-shadow: 0 0 10px var(--acc); 
     position: absolute; left: 0; width: 100%; 
     top: calc(var(--hud-h) + var(--safe-top)); 
     bottom: calc(var(--nav-h) + var(--safe-bottom)); 
-    padding: 0; z-index: 10; pointer-events: none; overflow: hidden; 
+    padding: 0; z-index: 10; 
+    /* ★ 修正重點：允許點擊 ★ */
+    pointer-events: auto; 
+    overflow: hidden; 
 }
 
 .page { 
@@ -271,65 +273,39 @@ body.mode-harem .t-card { border-left-color: var(--acc); background-image: linea
 #page-task.theme-yellow #task-ctrl-row { display: none !important; }
 #page-task.theme-yellow ~ #global-fab, body.mode-ach .fab { background: var(--gold) !important; color: #000; }
 
-#hud::after {
-    content: "V300.29 TextFix"; 
-    position: absolute; top: env(safe-area-inset-top, 0px); left: 0;
-    background: rgba(0, 0, 0, 0.5); color: rgba(255, 255, 255, 0.6);
-    font-size: 10px; padding: 2px 6px; border-bottom-right-radius: 5px; z-index: 9999; pointer-events: none;
-}
-
-/* ==========================================================================
-   V300.30 UI Additions (Progress Bar & Badges)
-   ========================================================================== */
-
-/* 1. 進度條 (Progress Bar) */
+/* 進度條 (Progress Bar) */
 .progress-track {
-    width: 100%;
-    height: 8px;
-    background: #eee;
-    border-radius: 4px;
-    margin-top: 8px;
-    overflow: hidden;
-    border: 1px solid #ddd;
+    width: 100%; height: 8px; background: #eee; border-radius: 4px;
+    margin-top: 8px; overflow: hidden; border: 1px solid #ddd;
 }
 .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #66bb6a, #43a047);
-    width: 0%;
-    transition: width 0.3s ease;
+    height: 100%; background: linear-gradient(90deg, #66bb6a, #43a047);
+    width: 0%; transition: width 0.3s ease;
 }
 
-/* 2. 難度標籤 (Difficulty Badge) */
+/* 難度標籤 */
 .diff-badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-right: 5px;
+    display: inline-block; padding: 2px 6px; border-radius: 4px;
+    color: #fff; font-size: 0.7rem; font-weight: bold; margin-right: 5px;
     text-shadow: 0 1px 1px rgba(0,0,0,0.2);
 }
 
-/* 3. 技能藥丸 (Skill Pill) */
+/* 技能藥丸 */
 .skill-pill {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: #f0f0f0;
-    color: #555;
-    border: 1px solid #ccc;
-    font-size: 0.7rem;
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    background: #f0f0f0; color: #555; border: 1px solid #ccc; font-size: 0.7rem;
 }
 
-/* 4. 任務卡片難度邊框 (可選) */
+/* 任務卡片難度邊框 */
 .t-card.diff-XL { border-left: 5px solid #e57373; }
 .t-card.diff-L  { border-left: 5px solid #ffb74d; }
 .t-card.diff-M  { border-left: 5px solid #4db6ac; }
 .t-card.diff-S  { border-left: 5px solid #81c784; }
 
-/* 5. 生疏效果 (Rusted) - 未來實作 */
-.skill-rusted {
-    filter: grayscale(1);
-    opacity: 0.7;
+/* DEBUG LABEL (可自行刪除) */
+#hud::after {
+    content: "V300.31 Unlocked"; 
+    position: absolute; top: env(safe-area-inset-top, 0px); left: 0;
+    background: rgba(0, 0, 0, 0.5); color: rgba(255, 255, 255, 0.6);
+    font-size: 10px; padding: 2px 6px; border-bottom-right-radius: 5px; z-index: 9999; pointer-events: none;
 }

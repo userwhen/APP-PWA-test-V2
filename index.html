@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>SelfQuest V300 Fixed</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<link rel="stylesheet" href="css/style105.css?v=3.1"> <link rel="manifest" href="./manifest.json">
-	<meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style105.css?v=300.31">
+    <link rel="manifest" href="./manifest.json">
 </head>
 <body>
+
 <div id="app-frame">
     <div id="hud">
         <div class="hud-left">
@@ -45,9 +46,6 @@
             </div>
             <div id="sec-attr" class="stat-sec active">
                 <div id="attr-list"></div>
-                <div class="row" style="margin-top:10px; justify-content: flex-end;">
-                    <button class="btn-xs" onclick="act.addNewSkill()">+ 新增技能</button>
-                </div>
                 <div id="skill-list" style="margin-top:10px"></div>
             </div>
             <div id="sec-cal" class="stat-sec">
@@ -140,68 +138,86 @@
     <button class="fab" id="global-fab" onclick="act.handleFab()">+</button>
 
     <div id="m-create" class="mask">
-    <div class="modal">
-        <div class="m-head">
-            任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button>
-        </div>
-        <div class="m-body">
-            <div class="row row-center mb-0">
-                <input id="nt-title" class="inp flex-1 mb-0" placeholder="任務標題 (例如: 跑 3km)">
-                <div id="btn-pin-toggle" class="pin-btn" onclick="this.classList.toggle('active'); document.getElementById('nt-pinned').checked = this.classList.contains('active');">📌</div>
-                <input type="checkbox" id="nt-pinned" style="display:none">
+        <div class="modal">
+            <div class="m-head">
+                任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button>
             </div>
-            
-            <textarea id="nt-desc" class="inp inp-area mt-sm" placeholder="備註或細節..."></textarea>
-            
-            <label class="lbl">難度與回饋</label>
-            <div class="row">
-                <select id="nt-difficulty" class="inp flex-1" style="font-weight:bold; color:#d84315;">
-                    <option value="S">🟢 簡單 (Relax)</option>
-                    <option value="M" selected>🔵 中等 (Normal)</option>
-                    <option value="L">🟠 困難 (Hard)</option>
-                    <option value="XL">🔴 史詩 (Epic)</option>
-                </select>
-                <select id="nt-tag-select" class="inp flex-1">
-                    <option value="">(無技能綁定)</option>
-                    <option value="運動">運動 (體能)</option>
-                    <option value="閱讀">閱讀 (智慧)</option>
-                    <option value="家事">家事 (靈巧)</option>
-                    <option value="保養">保養 (魅力)</option>
-                    <option value="早起">早起 (毅力)</option>
-                    <option value="冥想">冥想 (幸運)</option>
-                </select>
-            </div>
-            
-            <div class="row row-center">
-                <label class="lbl flex-1">顯示分類:</label>
-                <select id="nt-cat-select" class="inp flex-2">
-                    <option value="每日">每日習慣</option>
-                    <option value="雜事" selected>待辦雜事</option>
-                    <option value="願望">願望清單</option>
-                    <option value="工作">專案工作</option>
-                </select>
-            </div>
+            <div class="m-body">
+                <div class="row row-center mb-0">
+                    <input id="nt-title" class="inp flex-1 mb-0" placeholder="任務標題 (例如: 跑 3km)">
+                    <div id="btn-pin-toggle" class="pin-btn" onclick="this.classList.toggle('active'); document.getElementById('nt-pinned').checked = this.classList.contains('active');">📌</div>
+                    <input type="checkbox" id="nt-pinned" style="display:none">
+                </div>
+                <textarea id="nt-desc" class="inp inp-area mt-sm" placeholder="備註或細節..."></textarea>
+                
+                <label class="lbl">難度與技能</label>
+                <div class="row">
+                    <select id="nt-difficulty" class="inp flex-1" style="font-weight:bold; color:#d84315;">
+                        <option value="S">🟢 簡單</option>
+                        <option value="M" selected>🔵 中等</option>
+                        <option value="L">🟠 困難</option>
+                        <option value="XL">🔴 史詩</option>
+                    </select>
+                    <select id="nt-tag-select" class="inp flex-1">
+                        <option value="">(無技能)</option>
+                        <option value="運動">運動 (體能)</option>
+                        <option value="閱讀">閱讀 (智慧)</option>
+                        <option value="家事">家事 (靈巧)</option>
+                        <option value="保養">保養 (魅力)</option>
+                        <option value="早起">早起 (毅力)</option>
+                        <option value="冥想">冥想 (幸運)</option>
+                    </select>
+                </div>
+                
+                <div class="row row-center">
+                    <label class="lbl flex-1">分類:</label>
+                    <select id="nt-cat-select" class="inp flex-2">
+                        <option value="每日">每日習慣</option>
+                        <option value="雜事" selected>待辦雜事</option>
+                        <option value="願望">願望清單</option>
+                        <option value="工作">專案工作</option>
+                    </select>
+                </div>
 
-            <div class="row row-center" style="justify-content:space-between; margin-top:10px; border-top:1px solid #ccc; padding-top:10px;">
-                <label class="lbl" style="margin:0">子任務 / 步驟</label>
-                <button class="btn-xs" onclick="act.addSubtask()">+ 新增步驟</button>
+                <div class="row row-center" style="justify-content:space-between; margin-top:10px; border-top:1px solid #ccc; padding-top:10px;">
+                    <label class="lbl" style="margin:0">子任務</label>
+                    <button class="btn-xs" onclick="act.addSubtask()">+ 新增</button>
+                </div>
+                <div id="nt-subs" class="mt-md"></div>
+                
+                <label class="lbl" style="margin-top:15px;">進階</label>
+                <div class="row">
+                    <input type="datetime-local" id="nt-deadline" class="inp flex-1">
+                    <select id="nt-type" class="inp flex-1" onchange="document.getElementById('nt-target').style.display = this.value==='count'?'block':'none'">
+                        <option value="normal">一般</option>
+                        <option value="count">計次</option>
+                    </select>
+                    <input id="nt-target" type="tel" class="inp flex-1" style="display:none;" placeholder="次數">
+                </div>
             </div>
-            <div id="nt-subs" class="mt-md"></div>
-            
-            <label class="lbl" style="margin-top:15px;">進階設定</label>
-            <div class="row">
-                <input type="datetime-local" id="nt-deadline" class="inp flex-1">
-                <select id="nt-type" class="inp flex-1" onchange="document.getElementById('nt-target').style.display = this.value==='count'?'block':'none'">
-                    <option value="normal">一般任務</option>
-                    <option value="count">計次任務</option>
-                </select>
-                <input id="nt-target" type="tel" class="inp flex-1" style="display:none;" placeholder="次數">
+            <div class="m-foot">
+                <button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button>
             </div>
-        </div>
-        <div class="m-foot">
-            <button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button>
         </div>
     </div>
+
+    <div id="m-skill-edit" class="mask"><div class="modal no-head" style="width:80%;height:auto;min-height:150px;"><div class="m-head" style="display:none;"></div><div class="m-body" style="display:flex; flex-direction:column; justify-content:center;"><p style="text-align:center;font-weight:bold;margin-bottom:15px;">管理技能</p><input id="sk-name" class="inp" placeholder="輸入名稱" maxlength="10"></div><div class="m-foot" style="gap:10px;"><button class="btn-del" style="flex:1" onclick="act.deleteSkill()">刪除</button><button class="btn-ok" style="flex:1" onclick="act.saveSkill()">確定</button></div></div></div>
+    
+    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-head">成就設定 <button class="btn-close" onclick="act.closeModal('create-ach')">✕</button></div><div class="m-body"><div class="row row-center mb-0"><span style="color:#aaa;font-size:0.9rem">類型:</span> <label><input type="radio" name="ach-src" value="user" checked onchange="act.toggleAchSource()"> 自製</label> <label><input type="radio" name="ach-src" value="system" onchange="act.toggleAchSource()"> 官方</label></div><input id="na-title" class="inp mt-sm" placeholder="成就名稱"><textarea id="na-desc" class="inp inp-area" placeholder="描述"></textarea><label class="lbl">條件</label><select id="na-type" class="inp" onchange="act.checkAchTarget()"><option value="task_count">任務次數</option><option value="attr_lv">屬性等級</option><option value="ach_count">成就總數</option><option value="manual">其他</option></select><div class="row" id="na-target-row"><select id="na-target-key" class="inp flex-1"></select><input id="na-target-val" type="tel" class="inp flex-1" placeholder="目標值" maxlength="4" oninput="act.validateNumber(this, 9999)"></div><label class="lbl">獎勵</label><div class="box-gray" id="ach-reward-box"></div></div><div class="m-foot"><button class="btn-del" id="btn-del-ach" style="display:none; flex:1" onclick="act.deleteAchievement()">刪除</button><button class="btn-ok" style="flex:2" onclick="act.submitAchievement()">儲存</button></div></div></div>
+    
+    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式 (預設)</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式 (無大廳)</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" onchange="act.toggleCalMode()" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
+    
+    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-head"></div><div class="m-body"><input id="up-name" class="inp" placeholder="名稱"><textarea id="up-desc" class="inp inp-area" placeholder="描述"></textarea><div class="row"><select id="up-cat" class="inp flex-1" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option><option value="時間">時間</option><option value="金錢">金錢</option><option value="其他">其他</option></select><div id="up-dyn-fields" class="flex-1" style="display:flex;"></div></div><div class="row"><input id="up-price" class="inp flex-1" type="tel" placeholder="價格" maxlength="4" oninput="act.validateNumber(this, 9999)"><input id="up-qty" type="tel" class="inp flex-1" placeholder="庫存" maxlength="4" oninput="act.validateNumber(this, 9999)"><select id="up-perm" class="inp flex-1"><option value="once">單次</option><option value="daily">常駐</option></select></div></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" style="display:none; flex:1;" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" style="flex:2;" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
+    
+    <div id="m-bag-detail" class="mask" style="z-index:2200"><div class="modal no-head"><div class="m-head" style="display:none;"></div><div class="m-body"><label class="lbl" style="color:#888;font-size:0.8rem">名稱</label><input id="bd-name" class="inp" readonly style="color:#fff;background:#333;border:none"><div class="row"><div class="flex-1"><label class="lbl" style="color:#888;font-size:0.8rem">分類</label><input id="bd-cat" class="inp" readonly style="color:#acc;background:#333;border:none"></div><div class="flex-1"><label class="lbl" style="color:#888;font-size:0.8rem">效果</label><input id="bd-val" class="inp" readonly style="color:gold;background:#333;border:none"></div></div><label class="lbl" style="color:#888;font-size:0.8rem">描述</label><textarea id="bd-desc" class="inp inp-area" readonly style="color:#ccc;background:#333;border:none"></textarea><div style="margin-top:10px; padding-top:10px; border-top:1px solid #333;"><div style="color:#aaa;margin-bottom:10px;text-align:center;">目前擁有: <span id="bd-own" style="color:#fff;font-weight:bold">0</span></div><div class="row row-center"><input id="bd-qty" type="tel" class="inp text-center" style="width:80px; margin:0;" value="1" maxlength="4" oninput="act.validateNumber(this, 9999)"><button class="btn-del flex-1" onclick="act.useItem(true)">丟棄</button><button class="btn-ok flex-1" onclick="act.useItem(false)">使用</button></div></div></div><div class="m-foot"><button class="btn-bg" style="width:100%" onclick="act.closeModal('bag-detail')">關閉</button></div></div></div>
+    
+    <div id="m-bag" class="mask"><div class="modal"><div class="m-head">背包 <button class="btn-close" onclick="act.closeModal('bag')">✕</button></div><div class="m-body shop-grid" id="bag-grid"></div></div></div>
+    <div id="m-quick" class="mask"><div class="modal"><div class="m-head">每日快覽 <button class="btn-close" onclick="act.closeModal('quick')">✕</button></div><div class="m-body" id="quick-list"></div></div></div>
+    <div id="m-cal-limit" class="mask" style="z-index:3000"><div class="modal"><div class="m-head">目標</div><div class="m-body"><p style="color:#aaa;margin-bottom:10px">請輸入每日卡路里上限 (4位數)</p><input id="cal-limit-inp" type="tel" class="inp" placeholder="2000" maxlength="4" oninput="act.validateNumber(this, 9999)"></div><div class="m-foot"><button class="btn-ok" onclick="act.confirmCalLimit()">確定</button></div></div></div>
+    <div id="story-overlay" class="mask"><div class="modal text-center story-modal"><div style="font-size:3rem; margin-bottom:20px;" id="story-icon">🎲</div><div id="story-text" style="font-size:1.2rem; margin-bottom:20px; line-height:1.5; color:#fff;"></div><div id="story-result" style="color:var(--gold); margin-bottom:20px; font-weight:bold;"></div><button class="btn-ok" onclick="act.closeStory()">確定</button></div></div>
+    <div id="m-shop-clothes" class="mask"><div class="modal"><div class="m-head">服飾店 (付費鑽石優先) <button class="btn-close" onclick="act.closeModal('shop-clothes')">✕</button></div><div class="m-body" id="clothes-shop-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div></div></div>
+    <div id="m-system" class="mask"><div class="modal no-head" style="width:80%;max-height:auto;"><div class="m-head" style="display:none;"></div><div class="m-body"><p id="sys-msg" style="margin-bottom:15px; font-size:1.1rem; text-align:center;"></p><input id="sys-input" class="inp" style="display:none;" maxlength="20"></div><div class="m-foot" style="gap:10px;"><button class="btn-del" id="sys-cancel" style="display:none;flex:1;">取消</button><button class="btn-ok" id="sys-ok" style="flex:1;">確定</button></div></div></div>
+
 </div>
 
 <script src="js/data105.js"></script>
@@ -213,25 +229,20 @@
 <script src="js/modules/shop105.js"></script>
 <script src="js/modules/story105.js"></script> 
 <script src="js/modules/avatar105.js"></script> 
-<script src="js/main105.js?v=10.1"></script> <script>
-// 強制修復：當切換模式時，自動更新 body 的 class
+<script src="js/main105.js?v=10.2"></script>
+
+<script>
+// 初始化模式
 (function() {
     const originalChangeMode = window.act.changeMode;
     window.act.changeMode = function(mode) {
         if (originalChangeMode) originalChangeMode(mode);
         document.body.classList.remove('mode-adventurer', 'mode-harem', 'mode-basic');
         document.body.classList.add('mode-' + mode);
-        console.log("介面風格已切換為:", mode);
     };
-    const savedMode = localStorage.getItem('selfquest_mode') || 'adventurer';
     const selectEl = document.getElementById('set-mode');
     if(selectEl) document.body.classList.add('mode-' + selectEl.value);
 })();
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for(let registration of registrations) registration.unregister();
-    });
-}
 </script>
 
 </body>
