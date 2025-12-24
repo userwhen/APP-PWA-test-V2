@@ -100,12 +100,10 @@ body.mode-harem #hud { background: #7f0000; border-bottom: 2px solid var(--gold)
 #navbar { 
     position: absolute; bottom: 0; left: 0; width: 100%; 
     height: calc(var(--nav-h) + var(--safe-bottom)); 
-    max-height: calc(var(--nav-h) + var(--safe-bottom));
     padding-bottom: var(--safe-bottom); 
     background: #5d4037; border-top: 1px solid #3e2723; 
     z-index: 1000; display: flex; pointer-events: auto;
-    overflow: hidden; align-items: stretch; 
-    line-height: 1 !important; 
+    overflow: hidden; align-items: stretch; line-height: 1 !important; 
 }
 
 .nav-item { 
@@ -121,7 +119,8 @@ body.mode-harem .nav-item.active { color: var(--gold); text-shadow: 0 0 5px #ffe
     position: absolute; bottom: calc(80px + var(--safe-bottom)); right: 20px; 
     width: 65px; height: 65px; background: var(--acc); border-radius: 50%; 
     font-size: 32px; font-weight: bold; color: #fff; border: none; 
-    display: none; align-items: center; justify-content: center; 
+    display: flex; /* 改成 flex */
+    align-items: center; justify-content: center; 
     box-shadow: 0 5px 20px rgba(0,0,0,0.6); cursor: pointer; z-index: 2500; pointer-events: auto; 
 }
 body.mode-harem .fab { background: var(--acc); box-shadow: 0 0 10px var(--acc); }
