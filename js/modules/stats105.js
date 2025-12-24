@@ -1,15 +1,13 @@
-/* js/modules/stats105.js - V300.50 Skill Management */
+/* js/modules/stats105.js - V300.70 Skill Fix */
 window.act = window.act || {};
 
 Object.assign(window.act, {
-    // 開啟新增技能彈窗
     openAddSkill: () => {
         if (GlobalState.skills.length >= 10) return act.alert("技能已達上限 (10)，請刪除舊技能。");
         document.getElementById('new-skill-name').value = '';
         act.openModal('add-skill');
     },
 
-    // 提交新技能
     submitNewSkill: () => {
         const name = document.getElementById('new-skill-name').value.trim();
         const attr = document.getElementById('new-skill-attr').value;
@@ -30,7 +28,6 @@ Object.assign(window.act, {
         if(window.view && view.renderStats) view.renderStats();
     },
     
-    // 刪除技能 (長按或管理用，目前簡易實作)
     deleteSkillByName: (name) => {
         act.confirm(`刪除技能 [${name}]?`, (yes) => {
             if(yes) {

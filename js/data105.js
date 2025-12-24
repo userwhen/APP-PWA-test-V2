@@ -1,4 +1,4 @@
-/* js/data105.js - V300.60 Daily Login & Limits */
+/* js/data105.js - V300.70 Login Streak */
 
 const DefaultData = {
     gold: 100,
@@ -7,8 +7,9 @@ const DefaultData = {
     lv: 1,
     exp: 0,
     
-    // 記錄最後登入日期 (格式: YYYY-MM-DD)
-    lastLogin: "", 
+    // ★ 簽到系統變數 ★
+    loginStreak: 0, // 連續登入天數
+    lastLoginDate: "", // 最後登入日期 YYYY-MM-DD
 
     attrs: {
         str: { name: '體能', v: 1, exp: 0, icon: '💪' }, 
@@ -44,11 +45,10 @@ const DefaultData = {
     
     cal: { today: 0, logs: [], date: "" },
     
-    // 分類順序調整
     cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義 (去除英文代碼)
+// 難度定義
 const DIFFICULTY_DEFS = {
     1: { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
     2: { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
