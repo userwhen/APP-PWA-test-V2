@@ -1,45 +1,45 @@
-/* js/core105.js - V300.30 Logic Update */
+/* js/core105.js - V300.32 Logic Fixed */
 
 const act = {
-    // ... 保留 navigate, openModal 等基礎 UI 函數 ...
+    // 導航與彈窗基礎功能
     navigate: (p) => { document.querySelectorAll('.page').forEach(e=>e.classList.remove('active')); document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); const pg=document.getElementById('page-'+p); if(pg) pg.classList.add('active'); const btn=document.getElementById('nav-'+p); if(btn) btn.classList.add('active'); if(p==='main') view.renderHUD(); },
     openModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='flex'; m.classList.add('active'); } },
     closeModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='none'; m.classList.remove('active'); } },
 
-    // --- 任務提交 (修改版) ---
+    // --- 任務提交 (建立新任務) ---
     submitTask: () => {
         const title = document.getElementById('nt-title').value.trim();
         if (!title) return alert('請輸入標題');
         
         // 抓取難度與標籤
-        const diff = document.getElementById('nt-difficulty').value; // S, M, L, XL
-        const tagSelect = document.getElementById('nt-tag-select').value; // 這是 Skill Name
+        const diff = document.getElementById('nt-difficulty').value; 
+        const tagSelect = document.getElementById('nt-tag-select').value; 
         
-        // 建立新任務物件
         const newTask = {
             id: Date.now().toString(),
             title: title,
             desc: document.getElementById('nt-desc').value,
-            type: document.getElementById('nt-type').value, // normal / count
-            target: parseInt(document.getElementById('nt-target').value) || 1,
+            type: 'normal', // 簡化：暫時統一為一般任務
+            target: 1,
             curr: 0,
             
             // ★ 新核心：綁定技能與難度
-            skill: tagSelect, // 綁定的技能名稱 (例如 "縫紉")
-            difficulty: diff, // 難度 (S/M/L/XL)
+            skill: tagSelect, 
+            difficulty: diff, 
             
-            // 傳統分類 (僅作顯示用)
+            // 分類 (顯示用)
             cat: document.getElementById('nt-cat-select').value || '雜事',
-            
             pinned: document.getElementById('nt-pinned').checked,
-            subs: [], // 子任務由 addSubtask 處理 (這裡簡化，假設 view 會讀取 DOM)
+            subs: [], 
             deadline: document.getElementById('nt-deadline').value,
             done: false,
             created: new Date().toISOString()
         };
 
-        // 處理子任務 DOM 讀取 (簡化版)
-        document.querySelectorAll('.sub-task-input').forEach(inp => {
+        // 讀取子任務輸入框 (這部分依賴 CSS selector)
+        // 注意：index.html 必須確保子任務輸入框有 class="sub-task-input"
+        const subInputs = document.querySelectorAll('#nt-subs input');
+        subInputs.forEach(inp => {
             if(inp.value.trim()) newTask.subs.push({ text: inp.value.trim(), done: false });
         });
 
@@ -48,14 +48,14 @@ const act = {
         act.closeModal('create');
         view.renderTasks();
         
-        // 如果是新技能，自動註冊 (簡單防呆)
+        // 自動註冊新技能
         if (newTask.skill && !GlobalState.skills.find(s=>s.name===newTask.skill)) {
-            // 預設歸類到「雜事(靈巧)」或讓玩家選，這裡先預設靈巧，後續可改
+            // 預設將新技能歸類為 'dex'(靈巧) 或其他，這裡先設為 'gen'(通用) 或既有屬性
             GlobalState.skills.push({ name: newTask.skill, parent: 'dex', lv: 1, exp: 0, lastUsed: new Date().toISOString() });
         }
     },
 
-    // --- ★ 任務完成與結算 (核心重寫) ★ ---
+    // --- ★ 任務完成與結算 ★ ---
     toggleTask: (id) => {
         const t = GlobalState.tasks.find(x => x.id === id);
         if (!t) return;
@@ -64,51 +64,51 @@ const act = {
             // --- 完成任務 ---
             t.done = true;
             
-            // 1. 計算獎勵
+            // 1. 計算並發放獎勵
             const reward = act.calculateReward(t.difficulty);
             GlobalState.gold += reward.gold;
+            GlobalState.exp += reward.exp; // ★ 修正：增加主角經驗值
             
-            // 2. 增加屬性經驗 (如果有綁定技能)
+            // 主角升級檢查
+            const maxExp = GlobalState.lv * 100;
+            if (GlobalState.exp >= maxExp) {
+                GlobalState.exp -= maxExp;
+                GlobalState.lv++;
+                alert(`🆙 主角等級提升！ Lv.${GlobalState.lv}`);
+            }
+
+            // 2. 增加屬性/技能經驗
             let attrMsg = "";
             if (t.skill) {
-                // 找技能
                 let skill = GlobalState.skills.find(s => s.name === t.skill);
                 if (!skill) {
-                    // 防呆：如果找不到，自動補一個
                     skill = { name: t.skill, parent: 'dex', lv: 1, exp: 0 };
                     GlobalState.skills.push(skill);
                 }
-                
-                // 更新技能最後使用時間 (消除生疏狀態)
                 skill.lastUsed = new Date().toISOString();
                 
-                // 找對應的主屬性
-                const parentAttr = GlobalState.attrs[skill.parent] || GlobalState.attrs['vit']; // 預設毅力
-                
-                // 增加屬性經驗
+                // 技能對應的屬性
+                const parentAttr = GlobalState.attrs[skill.parent] || GlobalState.attrs['vit'];
                 parentAttr.exp += reward.exp;
                 attrMsg = ` | ${parentAttr.icon} ${parentAttr.name} Exp+${reward.exp}`;
                 
-                // 屬性升級檢查 (簡單公式：等級*100)
+                // 屬性升級檢查
                 if (parentAttr.exp >= parentAttr.v * 100) {
                     parentAttr.exp -= parentAttr.v * 100;
                     parentAttr.v++;
-                    alert(`🎉 恭喜！你的 [${parentAttr.name}] 提升到了 Lv.${parentAttr.v}！`);
+                    alert(`🎉 恭喜！屬性 [${parentAttr.name}] 提升到了 Lv.${parentAttr.v}！`);
                 }
             }
             
-            // 3. 顯示結果 (爆擊特效)
-            const critMsg = reward.isCrit ? " 🔥 大成功！獎勵加倍！" : "";
+            const critMsg = reward.isCrit ? " 🔥 大成功！" : "";
             act.addLog(`完成: ${t.title}`, `💰+${reward.gold}${attrMsg}${critMsg}`);
             
-            // 4. 播放特效 (可選)
-            if(reward.isCrit) alert(`🎲 運氣爆棚！${t.title} 獲得了大成功！\n金幣 x2 (${reward.gold})`);
+            if(reward.isCrit) alert(`🎲 運氣爆棚！${t.title} 獲得了大成功 (金幣加倍)！`);
 
         } else {
-            // --- 取消完成 (反悔) ---
+            // --- 取消完成 ---
             t.done = false;
-            // 簡單處理：倒扣基礎金幣，屬性就不扣了避免複雜
-            // 實務上 RPG 通常不鼓勵反覆刷，所以取消不退還屬性是合理的
+            // 這裡不倒扣屬性，避免邏輯過於複雜
         }
         
         act.save();
@@ -118,7 +118,10 @@ const act = {
     
     // --- 獎勵計算機 ---
     calculateReward: (diffCode) => {
-        const def = DIFFICULTY_DEFS[diffCode] || DIFFICULTY_DEFS['S'];
+        // 確保 DIFFICULTY_DEFS 存在 (在 data105.js)
+        const defs = (typeof DIFFICULTY_DEFS !== 'undefined') ? DIFFICULTY_DEFS : { 'S': { baseGold:10, baseExp:10 } };
+        const def = defs[diffCode] || defs['S'];
+        
         let gold = def.baseGold;
         let exp = def.baseExp;
         
@@ -126,9 +129,8 @@ const act = {
         const variance = (Math.random() * 0.4) + 0.8; 
         gold = Math.floor(gold * variance);
         
-        // 爆擊判定 (幸運屬性越高，機率越高)
-        // 基礎 5% + (幸運等級 * 1)%
-        const luc = GlobalState.attrs.luc.v;
+        // 爆擊判定
+        const luc = (GlobalState.attrs && GlobalState.attrs.luc) ? GlobalState.attrs.luc.v : 1;
         const critChance = 0.05 + (luc * 0.01); 
         const isCrit = Math.random() < critChance;
         
@@ -136,17 +138,18 @@ const act = {
             gold *= 2;
             exp = Math.floor(exp * 1.5);
         }
-        
         return { gold, exp, isCrit };
     },
 
     // --- 子任務操作 ---
     addSubtask: () => {
         const div = document.getElementById('nt-subs');
+        if(!div) return;
         const count = div.children.length;
         if(count >= 10) return;
         const row = document.createElement('div');
         row.className = 'row row-center mt-sm';
+        // 注意：這裡加入了 sub-task-input class，讓 submitTask 可以抓到
         row.innerHTML = `<input class="inp flex-1 mb-0 sub-task-input" placeholder="子步驟 ${count+1}"><button class="btn-del btn-icon-flat" onclick="this.parentElement.remove()">✕</button>`;
         div.appendChild(row);
     },
@@ -156,27 +159,23 @@ const act = {
         if(t && t.subs[sIdx]) {
             t.subs[sIdx].done = !t.subs[sIdx].done;
             act.save();
-            view.renderTasks(); // 重新渲染以更新進度條
+            view.renderTasks(); 
         }
     },
 
-    // 系統存檔與其他輔助
     save: () => { if(!window.isResetting) localStorage.setItem('SQ_V103', JSON.stringify(GlobalState)); },
     navToHistory: () => act.navigate('history'),
     editTask: (id) => alert("編輯功能暫未開放 (建議刪除重開)"),
-    deleteTask: () => { /* 略，沿用舊版或自行實作 */ },
+    deleteTask: () => { /* 保留給未來實作 */ },
     
-    // 初始化技能 (如果空的話)
     initSkills: () => {
         if(GlobalState.skills.length === 0) {
             GlobalState.skills = [
                 { name: '運動', parent: 'str', lv:1, exp:0 },
-                { name: '閱讀', parent: 'int', lv:1, exp:0 },
-                { name: '早起', parent: 'vit', lv:1, exp:0 }
+                { name: '閱讀', parent: 'int', lv:1, exp:0 }
             ];
         }
     }
 };
 
-// 確保 act 被掛載
 window.act = act;
