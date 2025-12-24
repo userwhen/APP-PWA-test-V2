@@ -1,16 +1,17 @@
-/* js/modules/task105.js - V300.32 Cleaned (UI Only) */
+/* js/modules/task105.js - V300.33 Cleaned (Fix Conflict) */
 window.act = window.act || {};
 
 Object.assign(window.act, {
-    // 只保留「切換分頁」與「介面輔助」功能
+    // 只保留分頁切換功能，防止邏輯衝突
     switchTaskTab: (tab) => {
         TempState.taskTab = tab;
-        // 更新 Tab 樣式
-        document.querySelectorAll('.h-tab').forEach(el => el.classList.remove('active'));
-        const tabBtn = document.getElementById('tab-' + tab);
-        if(tabBtn) tabBtn.classList.add('active');
         
-        // 更新頁面樣式 (黃色主題/一般主題)
+        // 1. 更新按鈕樣式
+        document.querySelectorAll('.h-tab').forEach(el => el.classList.remove('active'));
+        const activeBtn = document.getElementById('tab-' + tab);
+        if(activeBtn) activeBtn.classList.add('active');
+        
+        // 2. 更新頁面主題 (成就頁變金色)
         const page = document.getElementById('page-task');
         const fab = document.getElementById('global-fab');
         const ctrlRow = document.getElementById('task-ctrl-row');
@@ -27,12 +28,7 @@ Object.assign(window.act, {
             if(ctrlRow) ctrlRow.style.display = 'flex';
         }
         
-        // 重新渲染列表
+        // 3. 重新渲染
         if (window.view && view.renderTasks) view.renderTasks();
-    },
-    
-    // 輔助：渲染任務分類標籤 (給 view.renderTasks 用)
-    renderTaskCats: (elId) => {
-        /* 此功能已整合至 view105.js，保留此空殼防止報錯，或可完全移除 */
     }
 });
