@@ -1,4 +1,4 @@
-/* js/view105.js - V300.40 Visual Update (Added renderStats) */
+/* js/view105.js - V300.41 Shop Filter & Task UI */
 
 const view = {
     render: () => { 
@@ -16,7 +16,8 @@ const view = {
         const list = document.getElementById('task-list'); 
         list.innerHTML = '';
         
-        const cats = ['全部', '每日', '雜事', '願望', '工作'];
+        // ★ 渲染分類按鈕 (依據新的分類) ★
+        const cats = ['全部', ...GlobalState.cats];
         const catsRow = document.getElementById('task-cats-row');
         if(catsRow) {
             catsRow.innerHTML = cats.map(c => 
@@ -37,7 +38,9 @@ const view = {
 
         tasks.forEach(t => {
             const div = document.createElement('div');
-            div.className = `t-card ${t.done ? 'done' : ''} diff-${t.difficulty}`;
+            // 使用難度數字 (1-4) 對應樣式
+            const diffDef = DIFFICULTY_DEFS[t.difficulty] || DIFFICULTY_DEFS[2];
+            div.className = `t-card ${t.done ? 'done' : ''} diff-${diffDef.code}`;
             
             let progressBar = '';
             if (t.subs && t.subs.length > 0) {
@@ -47,8 +50,9 @@ const view = {
                 progressBar = `<div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div><div style="font-size:0.75rem; text-align:right; color:#666;">進度: ${pct}%</div>`;
             }
             
-            const diffDef = DIFFICULTY_DEFS[t.difficulty] || DIFFICULTY_DEFS['S'];
-            const skillTag = t.skill ? `<span class="skill-pill">${t.skill}</span>` : '';
+            // 顯示屬性名稱
+            const attrName = (t.attr && GlobalState.attrs[t.attr]) ? GlobalState.attrs[t.attr].name : '';
+            const skillTag = attrName ? `<span class="skill-pill">${attrName}</span>` : '';
             const diffBadge = `<span class="diff-badge" style="background:${diffDef.color}">${diffDef.label}</span>`;
             
             const subList = (t.subs && t.subs.length) ? `<div class="t-subs">` + t.subs.map((s,i) => `<div class="sub-row ${s.done?'done':''}" onclick="event.stopPropagation();act.toggleSubtask('${t.id}',${i})"><div class="chk-sm ${s.done?'checked':''}"></div><span>${s.text}</span></div>`).join('') + `</div>` : '';
@@ -58,35 +62,61 @@ const view = {
         });
     },
 
+    // ★ 商店渲染 (新增分類篩選) ★
     renderShop: () => {
         const list = document.getElementById('shop-list'); 
         if(!list) return;
         list.innerHTML = '';
-        const items = [...GlobalState.shop.npc, ...GlobalState.shop.user];
+        
+        // 1. 渲染商店分類按鈕
+        const shopTabs = document.getElementById('shop-tabs');
+        if(shopTabs) {
+            // 自動收集所有分類
+            const allItems = [...GlobalState.shop.npc, ...GlobalState.shop.user];
+            const cats = ['全部', ...new Set(allItems.map(i => i.category || '其他'))];
+            
+            shopTabs.innerHTML = cats.map(c => 
+                `<span class="tag-btn ${TempState.shopCategory===c?'active':''}" 
+                  onclick="TempState.shopCategory='${c}';view.renderShop()">${c}</span>`
+            ).join('');
+        }
+
+        // 2. 篩選商品
+        let items = [...GlobalState.shop.npc, ...GlobalState.shop.user];
+        if (TempState.shopCategory !== '全部') {
+            items = items.filter(i => i.category === TempState.shopCategory);
+        }
+
         items.forEach(i => {
             const div = document.createElement('div'); 
             div.className = `s-item ${i.qty<=0?'sold-out':''}`;
             div.innerHTML = `<div>${i.name}</div><div style="color:gold">$${i.price}</div>`;
             div.onclick = () => {
-                if(GlobalState.gold >= i.price) {
-                    GlobalState.gold -= i.price;
-                    alert(`購買成功：${i.name}`);
-                    view.renderHUD();
-                } else {
-                    alert('金幣不足！');
-                }
+                // 使用 core105.js 裡的新 helper
+                act.confirm(`確定購買 ${i.name} ($${i.price}) ?`, (yes) => {
+                    if(yes) {
+                        if(GlobalState.gold >= i.price) {
+                            GlobalState.gold -= i.price;
+                            if(i.perm !== 'daily') i.qty--; // 簡單庫存扣除
+                            act.alert(`購買成功：${i.name}`);
+                            act.save();
+                            view.renderHUD();
+                            view.renderShop();
+                        } else {
+                            act.alert('金幣不足！');
+                        }
+                    }
+                });
             };
             list.appendChild(div);
         });
     },
 
-    // ★★★ 核心補強：屬性與技能渲染 ★★★
     renderStats: () => {
         const list = document.getElementById('attr-list');
         if (!list) return;
         list.innerHTML = '';
         
-        // 渲染六大屬性
         for (const [key, attr] of Object.entries(GlobalState.attrs)) {
             const max = attr.v * 100;
             const pct = Math.min(100, (attr.exp / max) * 100);
@@ -100,21 +130,12 @@ const view = {
                 </div>
             `;
         }
-
-        // 渲染技能列表
+        
+        // 隱藏技能列表 (因為現在主要看屬性)
         const skillList = document.getElementById('skill-list');
-        if(skillList) {
-            skillList.innerHTML = '<h3 style="font-size:1rem; margin-top:20px; border-bottom:1px solid #ccc; padding-bottom:5px;">技能熟練度</h3>';
-            if(GlobalState.skills.length === 0) {
-                skillList.innerHTML += '<div style="color:#888;font-size:0.9rem;">尚無技能，請去建立任務並綁定標籤。</div>';
-            } else {
-                GlobalState.skills.forEach(s => {
-                    skillList.innerHTML += `<div class="tag-item" style="display:inline-block; margin:3px;">${s.name} <span style="font-size:0.8rem;color:#666;">(Lv.${s.lv})</span></div>`;
-                });
-            }
-        }
+        if(skillList) skillList.innerHTML = ''; 
 
-        // 渲染雷達圖
+        // 雷達圖
         const cv = document.getElementById('radar');
         if(cv && window.Chart) {
             if(window.myChart) window.myChart.destroy();

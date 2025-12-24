@@ -1,4 +1,4 @@
-/* js/data105.js - V300.30 Attributes & Difficulty */
+/* js/data105.js - V300.41 Categories & Attributes */
 
 const DefaultData = {
     gold: 100,
@@ -7,19 +7,17 @@ const DefaultData = {
     lv: 1,
     exp: 0,
     
-    // 6 大核心屬性 (固定 ID)
-    // 格式: { id: 'str', name: '力量', v: 1, exp: 0 }
+    // 6 大核心屬性 (ID 固定，名稱可改)
     attrs: {
-        str: { name: '體能', v: 1, exp: 0, icon: '💪' }, // 對應運動
-        int: { name: '智慧', v: 1, exp: 0, icon: '🧠' }, // 對應讀書、學習
-        vit: { name: '毅力', v: 1, exp: 0, icon: '🔥' }, // 對應每日、習慣
-        chr: { name: '魅力', v: 1, exp: 0, icon: '✨' }, // 對應保養、社交
-        dex: { name: '靈巧', v: 1, exp: 0, icon: '👐' }, // 對應手作、家事
-        luc: { name: '幸運', v: 1, exp: 0, icon: '🍀' }  // 對應隨機、願望
+        str: { name: '體能', v: 1, exp: 0, icon: '💪' }, 
+        int: { name: '智慧', v: 1, exp: 0, icon: '🧠' },
+        vit: { name: '毅力', v: 1, exp: 0, icon: '🔥' },
+        chr: { name: '魅力', v: 1, exp: 0, icon: '✨' },
+        dex: { name: '靈巧', v: 1, exp: 0, icon: '👐' },
+        luc: { name: '幸運', v: 1, exp: 0, icon: '🍀' }
     },
 
-    // 技能 (標籤) 列表
-    // 格式: { name: '縫紉', parent: 'dex', lv: 1, exp: 0, lastUsed: '2025-01-01' }
+    // 技能列表 (現在主要是記錄屬性等級的輔助，或者可視為"標籤"紀錄)
     skills: [], 
 
     tasks: [],
@@ -27,7 +25,7 @@ const DefaultData = {
     history: [],
     bag: [],
     
-    // 商店預設資料 (防止空空如也)
+    // 商店預設
     shop: {
         npc: [
             { id: 'def_1', name: '🥤 手搖飲', price: 60, category: '熱量', desc: '快樂泉源', qty: 99, perm: 'daily' },
@@ -39,23 +37,26 @@ const DefaultData = {
     },
 
     settings: {
-        mode: 'adventurer', // adventurer, harem, basic
+        mode: 'adventurer', 
         calMode: false,
         calMax: 2000,
-        strictMode: false // 嚴格模式 (開啟後會倒扣經驗)
+        strictMode: false 
     },
     
     cal: { today: 0, logs: [], date: "" },
-    cats: ['每日', '雜事', '願望'] // 預設分類
+    
+    // ★ 核心修改：分類重命名與排序 ★
+    cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義 (係數表)
+// 難度定義 (對應拉桿 1-4)
 const DIFFICULTY_DEFS = {
-    'S':  { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
-    'M':  { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
-    'L':  { label: '困難', baseGold: 80, baseExp: 60,  color: '#ffb74d' },
-    'XL': { label: '史詩', baseGold: 200, baseExp: 150, color: '#e57373' }
+    1: { code: 'S',  label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
+    2: { code: 'M',  label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
+    3: { code: 'L',  label: '困難', baseGold: 80, baseExp: 60,  color: '#ffb74d' },
+    4: { code: 'XL', label: '史詩', baseGold: 200, baseExp: 150, color: '#e57373' }
 };
 
 let GlobalState = JSON.parse(JSON.stringify(DefaultData));
-let TempState = { filterCategory: '全部', shopCategory: '熱量', taskTab: 'task' };
+// 新增 shopFilter 用於商店分類
+let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task' };

@@ -1,206 +1,63 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SelfQuest V300 Fixed</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style105.css?v=300.40">
-    <link rel="manifest" href="./manifest.json">
-</head>
-<body>
-
-<div id="app-frame">
-    <div id="hud">
-        <div class="hud-left">
-            <div class="avatar" id="hud-avatar"></div>
-            <div class="hud-info">
-                <div class="name">Commander</div>
-                <div class="lv-exp-row">
-                    <div class="lv-txt">Lv.<span id="ui-lv">1</span></div>
-                    <div class="exp-bar-bg"><div class="exp-bar-fill" id="ui-exp-bar"></div><span class="exp-text" id="ui-exp-text">0/100</span></div>
-                </div>
-            </div>
-        </div>
-        <div class="hud-right">
-            <div class="res-row">
-                <div class="coin-pill blue">💎 <span id="ui-gem">0</span></div> 
-                <div class="coin-pill purple">💠 <span id="ui-p-gem">0</span></div> 
-            </div>
-            <div class="res-row" style="justify-content: flex-end;">
-                <div class="coin-pill gold">💰 <span id="ui-gold">0</span></div>
-                <button class="menu-btn" onclick="act.openModal('settings')">≡</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="stats-overlay">
-        <div class="stats-head"><h2>屬性</h2><button class="btn-close" onclick="act.closeStats()">✕</button></div>
-        <div class="stats-body">
-            <div class="chart-box"><canvas id="radar"></canvas></div>
-            <div class="tabs">
-                <button class="tab active" onclick="act.switchTab('attr')" id="tb-attr">能力</button>
-                <button class="tab" onclick="act.switchTab('cal')" id="tb-cal">狀態</button>
-            </div>
-            <div id="sec-attr" class="stat-sec active">
-                <div id="attr-list"></div>
-                <div id="skill-list" style="margin-top:10px"></div>
-            </div>
-            <div id="sec-cal" class="stat-sec">
-                <div class="cal-card cal-show"><div>今日熱量</div><div class="cal-value"><span id="ui-cal-val">0</span> / <span id="ui-cal-max">2000</span></div></div>
-                <div id="cal-logs" class="cal-show" style="margin-top:10px;font-size:0.9rem;color:#888;"></div>
-                <div class="cal-hide-hint" style="text-align:center;color:#666;margin-top:20px;display:none">(卡路里模式已關閉)</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="content-area">
-        
-        <div id="page-task" class="page">
-            <div class="task-header">
-                <div class="header-tabs">
-                    <div class="h-tab active" id="tab-task" onclick="act.switchTaskTab('task')">任務</div>
-                    <div class="h-tab" id="tab-ach" onclick="act.switchTaskTab('ach')">成就</div>
-                </div>
-                <div class="task-header-row" id="task-ctrl-row">
-                    <div class="cat-scroll-wrapper"><div class="cat-scroll-container" id="task-cats-row"></div></div>
-                    <button class="btn-icon-sm" onclick="act.navToHistory()">📜</button>
-                </div>
-            </div>
-            <div id="task-list"></div>
-        </div>
-
-        <div id="page-history" class="page history-theme">
-            <div class="page-header"><h2 class="page-title" style="color:#b0a48f;">歷史紀錄</h2><button class="btn-bg" style="padding:5px 15px;" onclick="act.navigate('task')">↩ 返回</button></div>
-            <div id="history-list"></div>
-        </div>
-
-        <div id="page-main" class="page active">
-            <div class="main-scene">
-                <div class="quick-icons" id="main-icons" style="position: absolute; top: 20px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 10px;">
-                    <button class="icon-btn" id="btn-q-task" onclick="act.openModal('quick')">📝</button>
-                    <button class="icon-btn" id="btn-q-bag" onclick="act.openModal('bag')">🎒</button>
-                    <button class="icon-btn" id="btn-q-avatar" onclick="act.navigate('avatar')">👗</button>
-                    <button class="icon-btn" id="btn-q-qa" onclick="act.showQA()">❓</button>
-                </div>
-
-                <div class="char-stage" id="lobby-stage">
-                    <div class="char-container" onclick="act.openStats()"><div class="char-placeholder">🦸</div><div class="click-hint">點擊查看屬性</div></div>
-                </div>
-                <button class="btn-story" id="btn-story-mode" onclick="act.enterStoryMode()">🌀 劇情模式</button>
-            </div>
-        </div>
-
-        <div id="page-shop" class="page">
-            <h2 class="page-title" style="color:gold">商店</h2>
-            <div class="npc-box"><div class="npc-face"></div><div class="npc-text" id="shop-npc-text">歡迎光臨...</div></div>
-            <div class="shop-top-row">
-                <div class="cat-scroll-wrapper"><div class="cat-scroll-container" id="shop-tabs"></div></div>
-                <button class="btn-xs" style="flex-shrink:0; height:38px;" onclick="act.openUpload()">+ 上架商品</button>
-            </div>
-            <div class="shop-container-box"><div class="shop-grid" id="shop-list"></div></div>
-        </div>
-    </div>
-
-    <div id="navbar">
-        <button class="nav-item" onclick="act.navigate('task')" id="nav-task">📋 任務</button>
-        <button class="nav-item active" onclick="act.navigate('main')" id="nav-main">🏠 大廳</button>
-        <button class="nav-item" onclick="act.navigate('shop')" id="nav-shop">🛒 商店</button>
-    </div>
-
-    <div id="page-story">
-        <button class="btn-back-tr" onclick="act.navigate('main')">↩ 離開</button>
-        <div class="skip-btn" id="story-skip" onclick="act.storySkip()">SKIP ▶</div>
-        <div class="story-stage">
-            <div class="story-bg-img"></div>
-            <div class="dialogue-box"><div id="story-text">...</div></div>
-            <div class="char-left story-emoji" id="story-player-char">🦸</div>
-            <div class="char-right story-emoji" id="story-npc-char">🧙‍♂️</div>
-        </div>
-        <div class="story-ctrl"><button class="btn-explore" id="btn-explore" onclick="act.exploreStory()">繼續探險</button></div>
-    </div>
-
-    <div id="page-avatar">
-        <button class="btn-back-tr" onclick="act.navigate('main')">↩ 返回</button>
-        <div class="avatar-top-stage"><div class="char-placeholder" id="avatar-preview-char">🦸</div></div>
-        <div class="avatar-bottom-panel">
-            <div class="avatar-tabs" id="wardrobe-tabs">
-                <button class="av-tab active" onclick="act.switchWardrobeTab('hair')">髮型</button>
-                <button class="av-tab" onclick="act.switchWardrobeTab('top')">上衣</button>
-                <button class="av-tab" onclick="act.switchWardrobeTab('bottom')">下裝</button>
-                <button class="av-tab" onclick="act.switchWardrobeTab('acc')">配飾</button>
-            </div>
-            <div class="avatar-scroll-area" id="wardrobe-list"></div>
-        </div>
-    </div>
-
-    <button class="fab" id="global-fab" onclick="act.handleFab()">+</button>
-
-    <div id="m-create" class="mask">
+<div id="m-create" class="mask">
         <div class="modal">
-            <div class="m-head">任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button></div>
+            <div class="m-head">
+                任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button>
+            </div>
             <div class="m-body">
                 <div class="row row-center mb-0">
                     <input id="nt-title" class="inp flex-1 mb-0" placeholder="任務標題">
                     <div id="btn-pin-toggle" class="pin-btn" onclick="this.classList.toggle('active'); document.getElementById('nt-pinned').checked = this.classList.contains('active');">📌</div>
                     <input type="checkbox" id="nt-pinned" style="display:none">
                 </div>
-                <textarea id="nt-desc" class="inp inp-area mt-sm" placeholder="備註"></textarea>
-                <label class="lbl">難度與技能</label>
-                <div class="row">
-                    <select id="nt-difficulty" class="inp flex-1" style="font-weight:bold; color:#d84315;">
-                        <option value="S">🟢 簡單</option><option value="M" selected>🔵 中等</option><option value="L">🟠 困難</option><option value="XL">🔴 史詩</option>
+                <textarea id="nt-desc" class="inp inp-area mt-sm" placeholder="備註..."></textarea>
+                
+                <div class="row mt-sm">
+                    <select id="nt-cat-select" class="inp flex-1">
+                        <option value="每日">每日習慣</option>
+                        <option value="工作">專案工作</option>
+                        <option value="待辦" selected>待辦事項</option>
+                        <option value="願望">願望清單</option>
                     </select>
-                    <select id="nt-tag-select" class="inp flex-1">
-                        <option value="">(無技能)</option><option value="運動">運動 (體能)</option><option value="閱讀">閱讀 (智慧)</option><option value="家事">家事 (靈巧)</option><option value="保養">保養 (魅力)</option><option value="早起">早起 (毅力)</option><option value="冥想">冥想 (幸運)</option>
+                    <select id="nt-type" class="inp flex-1" style="border-left:none;">
+                        <option value="normal">一般任務</option>
+                        <option value="count">計次任務</option>
                     </select>
                 </div>
-                <div class="row row-center"><label class="lbl flex-1">分類:</label><select id="nt-cat-select" class="inp flex-2"><option value="每日">每日習慣</option><option value="雜事" selected>待辦雜事</option><option value="願望">願望清單</option><option value="工作">專案工作</option></select></div>
-                <div class="row row-center" style="justify-content:space-between; margin-top:10px;"><label class="lbl" style="margin:0">子任務</label><button class="btn-xs" onclick="act.addSubtask()">+ 新增</button></div>
-                <div id="nt-subs" class="mt-md"></div>
-                <label class="lbl" style="margin-top:15px;">進階</label>
-                <div class="row"><input type="datetime-local" id="nt-deadline" class="inp flex-1"><select id="nt-type" class="inp flex-1" onchange="document.getElementById('nt-target').style.display = this.value==='count'?'block':'none'"><option value="normal">一般</option><option value="count">計次</option></select><input id="nt-target" type="tel" class="inp flex-1" style="display:none;" placeholder="次數"></div>
+
+                <div class="row row-center" style="justify-content:space-between; margin-top:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                    <label class="lbl" style="margin:0">子任務</label>
+                    <button class="btn-xs" onclick="act.addSubtask()">+ 新增</button>
+                </div>
+                <div id="nt-subs" class="mt-sm"></div>
+                
+                <div class="box-gray mt-md">
+                    <div class="row row-center" style="justify-content:space-between;">
+                        <label class="lbl" style="margin:0">難度: <span id="nt-diff-label" style="font-weight:bold; color:#4db6ac">中等 (M)</span></label>
+                    </div>
+                    <input type="range" id="nt-diff-range" min="1" max="4" value="2" class="slider" oninput="act.updateDiffLabel(this.value)">
+                    
+                    <div class="row mt-sm row-center">
+                        <label class="lbl" style="margin:0; margin-right:10px;">屬性:</label>
+                        <select id="nt-attr-select" class="inp flex-1" style="margin:0;">
+                            <option value="">(無)</option>
+                            <option value="str">💪 體能</option>
+                            <option value="int">🧠 智慧</option>
+                            <option value="vit">🔥 毅力</option>
+                            <option value="chr">✨ 魅力</option>
+                            <option value="dex">👐 靈巧</option>
+                            <option value="luc">🍀 幸運</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <label class="lbl" style="margin-top:15px; color:#aaa; font-size:0.8rem;">進階設定</label>
+                <div class="row">
+                    <input type="datetime-local" id="nt-deadline" class="inp flex-1">
+                    <input id="nt-target" type="tel" class="inp flex-1" style="display:none;" placeholder="目標次數">
+                </div>
             </div>
-            <div class="m-foot"><button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button></div>
+            <div class="m-foot">
+                <button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button>
+            </div>
         </div>
     </div>
-
-    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式 (預設)</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" onchange="act.toggleCalMode()" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
-    
-    <div id="m-bag" class="mask"><div class="modal"><div class="m-head">背包 <button class="btn-close" onclick="act.closeModal('bag')">✕</button></div><div class="m-body shop-grid" id="bag-grid"></div></div></div>
-    <div id="m-quick" class="mask"><div class="modal"><div class="m-head">每日快覽 <button class="btn-close" onclick="act.closeModal('quick')">✕</button></div><div class="m-body" id="quick-list"></div></div></div>
-    <div id="m-bag-detail" class="mask" style="z-index:2200"><div class="modal no-head"><div class="m-body"><input id="bd-name" class="inp" readonly><textarea id="bd-desc" class="inp inp-area" readonly></textarea><div class="row"><input id="bd-qty" class="inp"><button class="btn-ok" onclick="act.useItem(false)">使用</button><button class="btn-del" onclick="act.useItem(true)">丟棄</button></div></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('bag-detail')">關閉</button></div></div></div>
-    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-body"><input id="up-name" class="inp"><textarea id="up-desc" class="inp"></textarea><select id="up-cat" class="inp" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option></select><div id="up-dyn-fields"></div><input id="up-price" class="inp"><input id="up-qty" class="inp"><select id="up-perm" class="inp"><option value="once">單次</option></select></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
-    <div id="m-skill-edit" class="mask"><div class="modal"><div class="m-body"><input id="sk-name" class="inp"></div><div class="m-foot"><button class="btn-ok" onclick="act.saveSkill()">儲存</button><button class="btn-del" onclick="act.deleteSkill()">刪除</button></div></div></div>
-    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-body"><input id="na-title" class="inp"></div><div class="m-foot"><button class="btn-ok" onclick="act.submitAchievement()">儲存</button></div></div></div>
-
-</div>
-
-<script src="js/data105.js"></script>
-<script src="js/view105.js"></script>
-<script src="js/core105.js"></script>
-<script src="js/modules/stats105.js"></script>
-<script src="js/modules/task105.js"></script>
-<script src="js/modules/ach105.js"></script>
-<script src="js/modules/shop105.js"></script>
-<script src="js/modules/story105.js"></script> 
-<script src="js/modules/avatar105.js"></script> 
-<script src="js/main105.js?v=10.4"></script>
-
-<script>
-(function() {
-    const originalChangeMode = window.act.changeMode;
-    window.act.changeMode = function(mode) {
-        if (originalChangeMode) originalChangeMode(mode);
-        document.body.classList.remove('mode-adventurer', 'mode-harem', 'mode-basic');
-        document.body.classList.add('mode-' + mode);
-    };
-    const selectEl = document.getElementById('set-mode');
-    if(selectEl) document.body.classList.add('mode-' + selectEl.value);
-})();
-</script>
-
-</body>
-</html>
