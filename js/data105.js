@@ -1,4 +1,4 @@
-/* js/data105.js - V300.95 Final */
+/* js/data105.js - V300.99 Final Data */
 
 const DefaultData = {
     gold: 100,
@@ -6,9 +6,12 @@ const DefaultData = {
     paidGem: 0,
     lv: 1,
     exp: 0,
+    
+    // 簽到與日期系統
     loginStreak: 0, 
     lastLoginDate: "", 
 
+    // 六大屬性
     attrs: {
         str: { name: '體能', v: 1, exp: 0, icon: '💪' }, 
         int: { name: '智慧', v: 1, exp: 0, icon: '🧠' },
@@ -47,7 +50,7 @@ const DefaultData = {
     cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義 (去除代碼)
+// 難度定義
 const DIFFICULTY_DEFS = {
     1: { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
     2: { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
@@ -56,4 +59,4 @@ const DIFFICULTY_DEFS = {
 };
 
 let GlobalState = JSON.parse(JSON.stringify(DefaultData));
-let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task', editTaskId: null, editShopId: null, editAchId: null };
+let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task' };

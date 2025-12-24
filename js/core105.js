@@ -1,9 +1,10 @@
-/* js/core105.js - V300.95 Final */
+/* js/core105.js - V300.99 Final Core */
 
 const act = {
     alert: (msg) => alert(msg), 
     confirm: (msg, cb) => { if(confirm(msg)) cb(true); },
     prompt: (msg, def, cb) => { const r = prompt(msg, def); if(r!==null) cb(r); },
+    
     generateId: (prefix='id') => prefix + '_' + Date.now() + Math.random().toString(36).substr(2, 9),
     
     clearInputs: (parentId) => {
@@ -41,10 +42,12 @@ const act = {
     openModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='flex'; m.classList.add('active'); } },
     closeModal: (id) => { const m=document.getElementById('m-'+id); if(m) { m.style.display='none'; m.classList.remove('active'); } },
 
+    // ★ 每日結算邏輯修復 ★
     checkDaily: () => {
         const today = new Date().toISOString().split('T')[0];
         
         if (GlobalState.lastLoginDate !== today) {
+            // 1. 簽到計算
             if (GlobalState.lastLoginDate) {
                 const last = new Date(GlobalState.lastLoginDate);
                 const curr = new Date(today);
@@ -57,17 +60,54 @@ const act = {
             GlobalState.lastLoginDate = today;
             
             let msg = `📅 新的一天！連續登入: ${GlobalState.loginStreak} 天`;
-            let rustedCount = 0;
-            GlobalState.skills.forEach(s => {
-                if(s.lastUsed) {
-                    const diff = Math.ceil(Math.abs(new Date() - new Date(s.lastUsed)) / (1000 * 60 * 60 * 24));
-                    if(diff > 3) { s.isRusted = true; rustedCount++; }
+            let report = { success: 0, fail: 0 };
+
+            // 2. 任務結算
+            GlobalState.tasks.forEach(t => {
+                const isDaily = t.cat === '每日';
+                
+                // 如果被釘選，不論是否完成都不算失敗，也不重置(除非是每日)
+                if (t.pinned && !isDaily) return; 
+
+                if (isDaily) {
+                    if (t.done) {
+                        report.success++;
+                        // 寫入歷史 (成功)
+                        GlobalState.history.push({ 
+                            title: t.title, date: yesterdayStr(), 
+                            rewards: "完成", status: "success" 
+                        });
+                    } else {
+                        // 每日任務沒做 -> 失敗
+                        report.fail++;
+                        GlobalState.history.push({ 
+                            title: t.title, date: yesterdayStr(), 
+                            rewards: "未完成", status: "fail" 
+                        });
+                    }
+                    // 重置狀態
+                    t.done = false; 
+                    t.curr = 0;
                 }
             });
-            if(rustedCount > 0) msg += `\n⚠️ ${rustedCount} 個技能生疏了！`;
 
-            // 重置
-            GlobalState.tasks.forEach(t => { if(t.cat === '每日') { t.done = false; t.curr = 0; } });
+            // 3. 技能生疏判定 (嚴格模式)
+            if (GlobalState.settings.strictMode) {
+                let rustedCount = 0;
+                GlobalState.skills.forEach(s => {
+                    if(s.lastUsed) {
+                        const diff = Math.ceil(Math.abs(new Date() - new Date(s.lastUsed)) / (1000 * 60 * 60 * 24));
+                        if(diff > 3) { 
+                            s.isRusted = true; 
+                            s.exp = Math.max(0, s.exp - 10); // 倒扣經驗
+                            rustedCount++; 
+                        }
+                    }
+                });
+                if(rustedCount > 0) msg += `\n⚠️ 嚴格模式: ${rustedCount} 個技能生疏退步了！`;
+            }
+
+            // 重置商店與卡路里
             GlobalState.shop.npc.forEach(i => { if(i.perm === 'daily') i.qty = 99; });
             GlobalState.cal.today = 0; 
             
@@ -87,18 +127,19 @@ const act = {
         ach.desc = `目前連續: ${GlobalState.loginStreak} 天 (目標: 7天)`;
     },
 
+    // 模擬跨日 (強制設為昨天)
     debugDay: () => {
         const d = new Date();
-        d.setDate(d.getDate() - 1); // 設為昨天
+        d.setDate(d.getDate() - 1); 
         GlobalState.lastLoginDate = d.toISOString().split('T')[0];
-        act.alert("時光倒流... (請重新整理頁面觸發跨日)");
+        act.alert("時光倒流至昨天... (請重新整理頁面以觸發結算)");
         act.save();
     },
 
+    // ★ 儲值修復：只加鑽石 ★
     submitPayment: (amount) => {
         act.alert(`系統連線中...\n成功儲值 ${amount} 元！\n獲得 ${amount} 付費鑽石。`);
-        GlobalState.paidGem = (GlobalState.paidGem || 0) + amount; // 修正：加到鑽石
-        GlobalState.gold += amount * 10; // 贈送金幣
+        GlobalState.paidGem = (GlobalState.paidGem || 0) + amount; 
         act.closeModal('payment');
         act.save();
         view.renderHUD();
@@ -111,67 +152,30 @@ const act = {
             return;
         }
         
-        // 建立新任務 (重置 ID)
         TempState.editTaskId = null;
         act.clearInputs('m-create');
-        document.getElementById('nt-cat-select').value = '每日';
-        document.getElementById('btn-del-task').style.display = 'none'; // 隱藏刪除
         
+        // 預設分類: 每日
+        const catSel = document.getElementById('nt-cat-select');
+        if(catSel) catSel.value = '每日';
+        
+        // 預設難度: 中等
+        const diffSlider = document.getElementById('nt-diff-range');
+        if(diffSlider) { diffSlider.value = 2; act.updateDiffLabel(2); }
+
         document.getElementById('nt-subs').innerHTML = '';
         act.refreshSkillSelect();
         act.openModal('create');
     },
 
-    // ★ 編輯任務 (載入資料) ★
-    editTask: (id) => {
-        const t = GlobalState.tasks.find(x => x.id === id);
-        if(!t) return;
-        
-        TempState.editTaskId = id;
-        act.openModal('create');
-        
-        document.getElementById('nt-title').value = t.title;
-        document.getElementById('nt-desc').value = t.desc;
-        document.getElementById('nt-cat-select').value = t.cat;
-        document.getElementById('nt-type').value = t.type;
-        document.getElementById('nt-target').value = t.target;
-        act.toggleTaskType(t.type);
-        
-        document.getElementById('nt-diff-range').value = t.difficulty;
-        act.updateDiffLabel(t.difficulty);
-        
-        act.refreshSkillSelect();
-        document.getElementById('nt-skill-select').value = t.skill || '';
-        
-        document.getElementById('nt-pinned').checked = t.pinned;
-        document.getElementById('nt-deadline').value = t.deadline || '';
-        
-        // 子任務載入
-        const subBox = document.getElementById('nt-subs');
-        subBox.innerHTML = '';
-        if(t.subs) {
-            t.subs.forEach(s => {
-                const row = document.createElement('div');
-                row.className = 'row row-center mt-sm';
-                row.innerHTML = `<input class="inp flex-1 mb-0 sub-task-input" value="${s.text}"><button class="btn-del btn-icon-flat" style="color:#d32f2f; margin-left:5px;" onclick="this.parentElement.remove()">✕</button>`;
-                subBox.appendChild(row);
-            });
-        }
-        
-        // 顯示刪除按鈕
-        document.getElementById('btn-del-task').style.display = 'block';
-    },
-
     refreshSkillSelect: () => {
         const sel = document.getElementById('nt-skill-select');
         if(!sel) return;
-        const currentVal = sel.value; // 保留當前值
         sel.innerHTML = '<option value="" disabled selected>選擇技能標籤...</option>';
         GlobalState.skills.forEach(s => {
             const attrName = GlobalState.attrs[s.parent] ? GlobalState.attrs[s.parent].name : '未知';
             sel.innerHTML += `<option value="${s.name}">${s.name} (${attrName})</option>`;
         });
-        if(currentVal) sel.value = currentVal;
     },
 
     updateDiffLabel: (val) => {
@@ -228,11 +232,9 @@ const act = {
             if(inp.value.trim()) taskObj.subs.push({ text: inp.value.trim(), done: false });
         });
 
-        // 如果是編輯模式，替換舊任務
         if (TempState.editTaskId) {
             const idx = GlobalState.tasks.findIndex(t => t.id === TempState.editTaskId);
             if (idx > -1) {
-                // 保留完成狀態
                 taskObj.done = GlobalState.tasks[idx].done;
                 taskObj.curr = GlobalState.tasks[idx].curr;
                 GlobalState.tasks[idx] = taskObj;
@@ -329,14 +331,15 @@ const act = {
         div.appendChild(row);
     },
     
+    // ★ 子任務自動完成邏輯 ★
     toggleSubtask: (tid, sIdx) => {
         const t = GlobalState.tasks.find(x => x.id === tid);
         if(t && t.subs[sIdx]) { 
             t.subs[sIdx].done = !t.subs[sIdx].done; 
             
-            // 自動完成判斷
             const allDone = t.subs.every(s => s.done);
             const anyDone = t.subs.some(s => s.done);
+            
             if (!t.done) {
                 if (t.subRule === 'all' && allDone) act.toggleTask(tid);
                 else if (t.subRule === 'any' && anyDone) act.toggleTask(tid);
@@ -354,9 +357,8 @@ const act = {
         GlobalState.settings.strictMode = document.getElementById('set-strict-mode').checked;
         act.save();
         act.closeModal('settings');
-        act.alert("設定已儲存");
         if(window.act.changeMode) window.act.changeMode(mode);
-        view.render(); // 重新渲染以隱藏/顯示卡路里
+        view.render();
     },
     
     deleteTask: (id) => {
@@ -364,16 +366,13 @@ const act = {
             if(yes) {
                 GlobalState.tasks = GlobalState.tasks.filter(t => t.id !== id);
                 act.save();
-                // 如果是在編輯視窗中刪除，關閉視窗
                 act.closeModal('create');
                 view.renderTasks();
             }
         });
     },
 
-    uploadCategoryChange: () => { 
-        if(window.act.shopUploadChange) window.act.shopUploadChange();
-    },
+    uploadCategoryChange: () => { if(window.act.shopUploadChange) window.act.shopUploadChange(); },
     
     validateNumber: (el, max) => {
         let v = parseInt(el.value);
@@ -383,6 +382,7 @@ const act = {
 
     save: () => { if(!window.isResetting) localStorage.setItem('SQ_V103', JSON.stringify(GlobalState)); },
     navToHistory: () => act.navigate('history'),
+    editTask: (id) => act.editTask(id), // 重新導向回自己
     showQA: () => act.alert("Q&A 功能開發中"),
     
     openStats: () => { act.navigate('stats'); },
@@ -392,5 +392,11 @@ const act = {
         document.querySelectorAll('.stat-sec').forEach(e => e.classList.remove('active')); document.getElementById('sec-'+t).classList.add('active'); 
     }
 };
+
+// 輔助函數：取得昨天日期字串
+function yesterdayStr() {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString();
+}
 
 window.act = act;

@@ -1,4 +1,4 @@
-/* js/modules/ach105.js - V300.95 Final */
+/* js/modules/ach105.js - V300.99 Fixed */
 window.act = window.act || {};
 
 Object.assign(window.act, {
@@ -15,11 +15,11 @@ Object.assign(window.act, {
         }
     },
     
+    // ★ 修復：正確開啟 m-create-ach ★
     openCreateAch: () => {
         TempState.editAchId = null; 
         act.clearInputs('m-create-ach');
         
-        // 預設為自製
         const rb = document.getElementsByName('ach-src');
         if(rb[0]) rb[0].checked = true;
         act.toggleAchSource();
@@ -46,7 +46,7 @@ Object.assign(window.act, {
             id: TempState.editAchId || act.generateId('ach'), 
             title: title, 
             desc: document.getElementById('na-desc').value, 
-            type: 'manual', // 簡化
+            type: 'manual', 
             isSystem: isSystem, 
             reward: reward, 
             done: false 

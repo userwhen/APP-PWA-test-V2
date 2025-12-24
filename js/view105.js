@@ -1,4 +1,4 @@
-/* js/view105.js - V300.95 Final */
+/* js/view105.js - V300.99 Final View */
 
 const view = {
     render: () => { 
@@ -17,6 +17,7 @@ const view = {
         document.body.className = 'mode-' + mode;
     },
 
+    // ★ 每日快覽修復 ★
     renderQuick: () => {
         const list = document.getElementById('quick-list');
         if(!list) return;
@@ -25,6 +26,7 @@ const view = {
         const todayStr = new Date().toISOString().split('T')[0];
         const tasks = GlobalState.tasks.filter(t => {
             const isToday = t.deadline && t.deadline.startsWith(todayStr);
+            // 只要標籤包含每日，或被釘選，或今天到期
             return (t.cat === '每日') || t.pinned || isToday;
         });
         
@@ -76,14 +78,15 @@ const view = {
             div.className = `t-card ${t.done ? 'done' : ''}`;
             div.style.borderLeft = `5px solid ${diffDef.color}`;
             
+            // 進度條 (顯示文字)
             let progressBar = '';
             if (t.subs && t.subs.length > 0) {
                 const doneCount = t.subs.filter(s => s.done).length;
                 const pct = Math.round((doneCount / t.subs.length) * 100);
                 progressBar = `
-                <div class="progress-track" style="position:relative;">
+                <div class="progress-track" style="position:relative; margin-top:8px;">
                     <div class="progress-fill" style="width:${pct}%"></div>
-                    <span style="position:absolute; width:100%; text-align:center; top:-1px; font-size:10px; color:#555;">${pct}%</span>
+                    <span style="position:absolute; width:100%; text-align:center; top:-2px; font-size:10px; color:#555; text-shadow:0 0 2px #fff;">${pct}%</span>
                 </div>`;
             }
             
@@ -94,9 +97,10 @@ const view = {
 
             const countDisplay = t.type === 'count' ? `<span style="font-size:0.8rem;color:#666;margin-left:5px;">(${t.curr}/${t.target})</span>` : '';
             
-            // ★ 管理按鈕: ⚙️ ★
-            const manageBtn = `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.editTask('${t.id}')">⚙️</span>`;
+            // 管理按鈕
+            const manageBtn = t.isUser ? `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.editTask('${t.id}')">⚙️</span>` : '';
 
+            // ★ Checkbox onclick 加上 stopPropagation ★
             div.innerHTML = `<div class="t-top"><div class="t-title-container" onclick="act.toggleTask('${t.id}')"><div class="chk ${t.done?'checked':''}" onclick="event.stopPropagation(); act.toggleTask('${t.id}')"></div><div class="t-title">${t.pinned ? '📌 ' : ''}${t.title}${countDisplay}<div style="margin-top:4px;">${diffBadge} ${skillTag}</div></div></div>${manageBtn}</div>${progressBar}${subList}`;
             list.appendChild(div);
         });
@@ -152,11 +156,13 @@ const view = {
         });
     },
 
+    // ★ 屬性顯示修復 ★
     renderStats: () => {
         const list = document.getElementById('attr-list');
         if (!list) return;
         list.innerHTML = '';
         
+        // 永遠渲染六大屬性
         for (const [key, attr] of Object.entries(GlobalState.attrs)) {
             const max = attr.v * 100;
             const pct = Math.min(100, (attr.exp / max) * 100);
@@ -174,7 +180,7 @@ const view = {
         if(skillList) {
             skillList.innerHTML = ''; 
             if (GlobalState.skills.length === 0) {
-                skillList.innerHTML = '<div style="color:#888;font-size:0.9rem;">尚無技能</div>';
+                skillList.innerHTML = '<div style="color:#888;font-size:0.9rem;">尚無技能，請點擊上方按鈕新增。</div>';
             } else {
                 GlobalState.skills.forEach(s => {
                     const pAttr = GlobalState.attrs[s.parent];
@@ -192,8 +198,11 @@ const view = {
         
         // ★ 卡路里隱藏邏輯 ★
         const calSec = document.getElementById('sec-cal');
-        if(calSec) {
-            calSec.style.display = GlobalState.settings.calMode ? 'block' : 'none';
+        const calTab = document.getElementById('tb-cal');
+        if(calSec && calTab) {
+            const show = GlobalState.settings.calMode;
+            calSec.style.display = show ? 'block' : 'none';
+            calTab.style.display = show ? 'inline-block' : 'none';
         }
 
         const cv = document.getElementById('radar');

@@ -182,6 +182,9 @@ body.mode-harem .fab { background: var(--acc); box-shadow: 0 0 10px var(--acc); 
 .t-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .t-title-container { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; cursor: pointer; }
 .t-title { flex: 1; text-align: left; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.t-title span {
+    font-size: 0.8rem !important; /* 縮小到期日字體 */
+}
 .chk { width: 26px; height: 26px; border: 2px solid var(--acc); border-radius: 50%; flex-shrink: 0; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; color: #fff; font-weight: bold; cursor: pointer; }
 .chk.checked { background: var(--acc); } .chk.ach-chk { border-color: var(--gold); } .chk.ach-chk.checked { background: var(--gold); }
 .chk-sm { width: 22px; height: 22px; border: 1px solid #bcaaa4; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #fff; }
@@ -300,9 +303,12 @@ body.mode-harem .t-card { border-left-color: var(--acc); background-image: linea
 .t-card.diff-M  { border-left: 5px solid #4db6ac; }
 .t-card.diff-S  { border-left: 5px solid #81c784; }
 
-/* 基礎模式快速按鈕 (在 Stats 頁面) */
+/* ★ 修復基礎模式按鈕位置 ★ */
 .basic-mode-icons {
     display: none; /* JS 控制 flex */
+    /* 確保在雷達圖旁邊，不會被內容蓋住 */
+    right: 20px !important; 
+    top: 80px !important;
 }
 
 /* 子任務刪除按鈕 */
@@ -313,6 +319,7 @@ body.mode-harem .t-card { border-left-color: var(--acc); background-image: linea
     cursor: pointer; 
     padding: 5px; 
     line-height: 1;
+    z-index: 10;
 }
 
 /* 難度 Slider 樣式 */
