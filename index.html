@@ -147,6 +147,26 @@
 
     <button class="fab" id="global-fab" onclick="act.handleFab()">+</button>
 
+<div id="m-payment" class="mask">
+    <div class="modal no-head" style="width:80%;max-height:auto;">
+        <div class="m-body" style="text-align:center;">
+            <h3 style="margin-bottom:20px; color:gold;">💎 儲值中心</h3>
+            <div class="row">
+                <button class="btn-bg flex-1" onclick="act.submitPayment(30)">$30 (30鑽)</button>
+                <button class="btn-bg flex-1" onclick="act.submitPayment(100)">$100 (100鑽)</button>
+            </div>
+            <div class="row">
+                <button class="btn-bg flex-1" onclick="act.submitPayment(300)">$300 (300鑽)</button>
+                <button class="btn-bg flex-1" onclick="act.submitPayment(1000)">$1000 (1000鑽)</button>
+            </div>
+            <p style="font-size:0.8rem;color:#888;margin-top:10px;">(此為模擬介面，不會實際扣款)</p>
+        </div>
+        <div class="m-foot">
+            <button class="btn-bg" style="width:100%" onclick="act.closeModal('payment')">取消</button>
+        </div>
+    </div>
+</div>
+
     <div id="m-create" class="mask">
         <div class="modal">
             <div class="m-head">任務設定 <button class="btn-close" onclick="act.closeModal('create')">✕</button></div>

@@ -1,12 +1,10 @@
-/* js/modules/task105.js - V300.70 Fixed */
+/* js/modules/task105.js - V300.80 Clean */
 window.act = window.act || {};
-
 Object.assign(window.act, {
     switchTaskTab: (tab) => {
         TempState.taskTab = tab;
         document.querySelectorAll('.h-tab').forEach(el => el.classList.remove('active'));
-        const activeBtn = document.getElementById('tab-' + tab);
-        if(activeBtn) activeBtn.classList.add('active');
+        document.getElementById('tab-' + tab).classList.add('active');
         
         const page = document.getElementById('page-task');
         const fab = document.getElementById('global-fab');
@@ -23,7 +21,6 @@ Object.assign(window.act, {
             if(fab) fab.style.background = 'var(--acc)';
             if(ctrlRow) ctrlRow.style.display = 'flex';
         }
-        
         if (window.view && view.renderTasks) view.renderTasks();
     }
 });
