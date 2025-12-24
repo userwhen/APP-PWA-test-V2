@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>SelfQuest V300.90</title>
+    <title>SelfQuest V300 Final</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="css/style105.css?v=300.90">
+    <link rel="stylesheet" href="css/style105.css?v=300.95">
     <link rel="manifest" href="./manifest.json">
 </head>
 <body>
@@ -29,7 +28,7 @@
                 <div class="coin-pill blue">💎 <span id="ui-gem">0</span></div> 
                 <div class="coin-pill purple">💠 <span id="ui-p-gem">0</span></div> 
             </div>
-            <div class="res-row" style="justify-content: flex-end;" onclick="act.openModal('payment')">
+            <div class="res-row" style="justify-content: flex-end;">
                 <div class="coin-pill gold">💰 <span id="ui-gold">0</span></div>
                 <button class="menu-btn" onclick="event.stopPropagation(); act.openModal('settings')">≡</button>
             </div>
@@ -58,7 +57,7 @@
 
         <div id="page-main" class="page active">
             <div class="main-scene">
-                <div class="quick-icons" style="position: absolute; top: 20px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 10px;">
+                <div class="quick-icons" id="main-icons">
                     <button class="icon-btn" onclick="act.openModal('quick')">📝</button>
                     <button class="icon-btn" onclick="act.openModal('bag')">🎒</button>
                     <button class="icon-btn" onclick="act.navigate('avatar')">👗</button>
@@ -82,15 +81,15 @@
         </div>
 
         <div id="page-stats" class="page">
-            <div class="stats-head"><h2>屬性與狀態</h2></div>
-            <div class="stats-body" style="position: relative;">
-                <div class="quick-icons basic-mode-icons" style="position: absolute; top: 10px; right: 10px; z-index: 10; display: none; flex-direction: column; gap: 10px;">
-                    <button class="icon-btn" onclick="act.openModal('quick')">📝</button>
-                    <button class="icon-btn" onclick="act.openModal('bag')">🎒</button>
-                    <button class="icon-btn" onclick="act.navigate('avatar')">👗</button>
-                    <button class="icon-btn" onclick="act.showQA()">❓</button>
-                </div>
+            <div class="quick-icons basic-mode-icons">
+                <button class="icon-btn" onclick="act.openModal('quick')">📝</button>
+                <button class="icon-btn" onclick="act.openModal('bag')">🎒</button>
+                <button class="icon-btn" onclick="act.navigate('avatar')">👗</button>
+                <button class="icon-btn" onclick="act.showQA()">❓</button>
+            </div>
 
+            <div class="stats-head"><h2>屬性與狀態</h2></div>
+            <div class="stats-body">
                 <div class="chart-box"><canvas id="radar"></canvas></div>
                 <div class="tabs">
                     <button class="tab active" onclick="act.switchTab('attr')" id="tb-attr">能力</button>
@@ -107,6 +106,7 @@
                 <div id="sec-cal" class="stat-sec">
                     <div class="cal-card cal-show"><div>今日熱量</div><div class="cal-value"><span id="ui-cal-val">0</span> / <span id="ui-cal-max">2000</span></div></div>
                     <div id="cal-logs" class="cal-show" style="margin-top:10px;font-size:0.9rem;color:#888;"></div>
+                    <div class="cal-hide-hint" style="text-align:center;color:#666;margin-top:20px;display:none">(卡路里模式已關閉)</div>
                 </div>
             </div>
         </div>
@@ -176,7 +176,7 @@
                 <div class="row row-center" style="justify-content:space-between; margin-top:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
                     <div style="display:flex; align-items:center; gap:5px;">
                         <label class="lbl" style="margin:0">子任務</label>
-                        <select id="nt-sub-rule" class="inp" style="padding:2px; font-size:0.8rem; width:auto; height:auto; margin:0;">
+                        <select id="nt-sub-rule" class="inp" style="padding:2px; height:auto; margin:0; width:auto; font-size:0.8rem;">
                             <option value="all">需全完成</option>
                             <option value="any">擇一完成</option>
                         </select>
@@ -190,30 +190,34 @@
                         <label class="lbl" style="margin:0">難度: <span id="nt-diff-label" style="font-weight:bold; color:#4db6ac">中等</span></label>
                     </div>
                     <input type="range" id="nt-diff-range" min="1" max="4" value="2" class="slider" oninput="act.updateDiffLabel(this.value)">
-                    
                     <div class="row mt-sm row-center">
                         <label class="lbl" style="margin:0; margin-right:10px;">技能:</label>
                         <select id="nt-skill-select" class="inp flex-1" style="margin:0;">
-                            <option value="" disabled selected>選擇技能標籤...</option>
+                            <option value="" disabled selected>選擇技能...</option>
                         </select>
                     </div>
                 </div>
                 
                 <label class="lbl" style="margin-top:15px; color:#aaa; font-size:0.8rem;">到期時間</label>
-                <div class="row"><input type="datetime-local" id="nt-deadline" class="inp flex-1" style="font-size:1rem;"></div>
+                <div class="row"><input type="datetime-local" id="nt-deadline" class="inp flex-1"></div>
             </div>
-            <div class="m-foot"><button class="btn-ok" style="flex:2;" onclick="act.submitTask()">建立任務</button></div>
+            <div class="m-foot">
+                <button class="btn-del" id="btn-del-task" style="display:none; flex:1;" onclick="act.deleteTask()">刪除</button>
+                <button class="btn-ok" style="flex:2;" onclick="act.submitTask()">儲存</button>
+            </div>
         </div>
     </div>
 
-    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-body"><input id="up-name" class="inp" placeholder="商品名稱" maxlength="10"><textarea id="up-desc" class="inp" placeholder="描述/備註"></textarea><select id="up-cat" class="inp" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option><option value="時間">時間</option><option value="金錢">金錢</option><option value="其他">其他</option></select><div id="up-dyn-fields"></div><input id="up-price" class="inp" placeholder="價格 (Max 9999)" type="tel" maxlength="4" oninput="act.validateNumber(this, 9999)"><input id="up-qty" class="inp" placeholder="庫存 (Max 99)" type="tel" maxlength="2" oninput="act.validateNumber(this, 99)"><select id="up-perm" class="inp"><option value="once">單次</option><option value="daily">常駐 (每日補貨)</option></select></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
+    <div id="m-upload" class="mask"><div class="modal no-head"><div class="m-body"><input id="up-name" class="inp" placeholder="商品名稱" maxlength="10"><textarea id="up-desc" class="inp" placeholder="描述/備註"></textarea><select id="up-cat" class="inp" onchange="act.uploadCategoryChange()"><option value="熱量">熱量</option><option value="時間">時間</option><option value="金錢">金錢</option><option value="其他">其他</option></select><div id="up-dyn-fields"></div><input id="up-price" class="inp" placeholder="價格 (Max 9999)" type="tel" maxlength="4" oninput="act.validateNumber(this, 9999)"><input id="up-qty" class="inp" placeholder="庫存 (Max 99)" type="tel" maxlength="2" oninput="act.validateNumber(this, 99)"><select id="up-perm" class="inp"><option value="once">單次</option><option value="daily">常駐 (每日補貨)</option></select></div><div class="m-foot"><button class="btn-del" id="btn-del-shop" style="display:none; flex:1;" onclick="act.deleteShopItem()">下架</button><button class="btn-ok" style="flex:2;" onclick="act.submitUpload()">上架</button><button class="btn-bg" onclick="act.closeModal('upload')">取消</button></div></div></div>
 
-    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button><button class="btn-bg mt-sm" style="width:100%;background:#e0f7fa;color:#006064;" onclick="act.openPayment()">💎 前往儲值</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
+    <div id="m-payment" class="mask"><div class="modal no-head" style="width:80%;max-height:auto;"><div class="m-body" style="text-align:center;"><h3 style="margin-bottom:20px; color:gold;">💎 儲值中心</h3><div class="row"><button class="btn-bg flex-1" onclick="act.submitPayment(30)">$30 (30鑽)</button><button class="btn-bg flex-1" onclick="act.submitPayment(100)">$100 (100鑽)</button></div><div class="row"><button class="btn-bg flex-1" onclick="act.submitPayment(300)">$300 (300鑽)</button><button class="btn-bg flex-1" onclick="act.submitPayment(1000)">$1000 (1000鑽)</button></div><p style="font-size:0.8rem;color:#888;margin-top:10px;">(模擬介面)</p></div><div class="m-foot"><button class="btn-bg" style="width:100%" onclick="act.closeModal('payment')">取消</button></div></div></div>
+
+    <div id="m-settings" class="mask"><div class="modal"><div class="m-head">設定 <button class="btn-close" onclick="act.closeModal('settings')">✕</button></div><div class="m-body"><label class="lbl">遊戲模式</label><select id="set-mode" class="inp" onchange="act.changeMode(this.value)"><option value="adventurer">🛡️ 冒險者模式</option><option value="harem">💕 后宮模式</option><option value="basic">📊 基礎模式</option></select><div class="box-dark row" style="align-items:center; justify-content:space-around;"><label class="row row-center pointer mb-0"><input type="checkbox" id="set-cal-mode" class="chk-lg"> 卡路里</label><label class="row row-center text-danger pointer mb-0"><input type="checkbox" id="set-strict-mode" class="chk-lg"> 嚴格</label></div><div class="row"><button class="btn-bg flex-1" onclick="act.exportData()">匯出</button><button class="btn-bg flex-1" onclick="act.importData()">匯入</button></div><button class="btn-bg mt-sm" style="width:100%;" onclick="act.debugDay()">[Debug] 模擬跨日</button><button class="btn-bg mt-sm" style="width:100%;background:#e0f7fa;color:#006064;" onclick="act.openModal('payment')">💎 前往儲值</button></div><div class="m-foot"><button class="btn-del flex-1" onclick="act.resetData()">重置</button><button class="btn-ok flex-1" onclick="act.saveSettings()">儲存</button></div></div></div>
+
+    <div id="m-add-skill" class="mask"><div class="modal no-head" style="width:85%;"><div class="m-body"><label class="lbl">新增技能標籤</label><input id="new-skill-name" class="inp" placeholder="名稱 (例: 跑酷)" maxlength="10"><label class="lbl">對應屬性</label><select id="new-skill-attr" class="inp"><option value="str">💪 體能</option><option value="int">🧠 智慧</option><option value="vit">🔥 毅力</option><option value="chr">✨ 魅力</option><option value="dex">👐 靈巧</option><option value="luc">🍀 幸運</option></select></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('add-skill')">取消</button><button class="btn-ok" onclick="act.submitNewSkill()">確定</button></div></div></div>
     
-    <div id="m-payment" class="mask"><div class="modal no-head" style="width:80%;max-height:auto;"><div class="m-body" style="text-align:center;"><h3 style="margin-bottom:20px; color:gold;">💎 儲值中心</h3><div class="row"><button class="btn-bg flex-1" onclick="act.submitPayment(30)">$30 (30鑽)</button><button class="btn-bg flex-1" onclick="act.submitPayment(100)">$100 (100鑽)</button></div><div class="row"><button class="btn-bg flex-1" onclick="act.submitPayment(300)">$300 (300鑽)</button><button class="btn-bg flex-1" onclick="act.submitPayment(1000)">$1000 (1000鑽)</button></div><p style="font-size:0.8rem;color:#888;margin-top:10px;">(模擬介面，無實際扣款)</p></div><div class="m-foot"><button class="btn-bg" style="width:100%" onclick="act.closeModal('payment')">取消</button></div></div></div>
-
-    <div id="m-add-skill" class="mask"><div class="modal no-head" style="width:85%;"><div class="m-body"><label class="lbl">新增技能標籤</label><input id="new-skill-name" class="inp" placeholder="名稱 (例: 跑酷)" maxlength="10"><label class="lbl">對應屬性</label><select id="new-skill-attr" class="inp"><option value="str">💪 體能</option><option value="int">🧠 智慧</option><option value="vit">🔥 毅力</option><option value="chr">✨ 魅力</option><option value="dex">👐 靈巧</option><option value="luc">🍀 幸運</option></select><p style="font-size:0.8rem;color:#888;">上限 10 個技能。</p></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('add-skill')">取消</button><button class="btn-ok" onclick="act.submitNewSkill()">確定</button></div></div></div>
-    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-body"><input id="na-title" class="inp" placeholder="成就名稱"><div class="m-foot"><button class="btn-ok" onclick="act.submitAchievement()">儲存</button><button class="btn-bg" onclick="act.closeModal('create-ach')">取消</button></div></div></div></div>
+    <div id="m-create-ach" class="mask"><div class="modal"><div class="m-body"><input id="na-title" class="inp" placeholder="成就名稱"><textarea id="na-desc" class="inp" placeholder="描述"></textarea><div class="m-foot"><button class="btn-del" id="btn-del-ach" style="display:none;flex:1;" onclick="act.deleteAchievement()">刪除</button><button class="btn-ok" style="flex:2;" onclick="act.submitAchievement()">儲存</button><button class="btn-bg" style="flex:1;" onclick="act.closeModal('create-ach')">取消</button></div></div></div></div>
+    
     <div id="m-bag" class="mask"><div class="modal"><div class="m-head">背包 <button class="btn-close" onclick="act.closeModal('bag')">✕</button></div><div class="m-body shop-grid" id="bag-grid"></div></div></div>
     <div id="m-quick" class="mask"><div class="modal"><div class="m-head">每日快覽 <button class="btn-close" onclick="act.closeModal('quick')">✕</button></div><div class="m-body" id="quick-list"></div></div></div>
     <div id="m-bag-detail" class="mask" style="z-index:2200"><div class="modal no-head"><div class="m-body"><input id="bd-name" class="inp" readonly><textarea id="bd-desc" class="inp inp-area" readonly></textarea><div class="row"><input id="bd-qty" class="inp"><button class="btn-ok" onclick="act.useItem(false)">使用</button><button class="btn-del" onclick="act.useItem(true)">丟棄</button></div></div><div class="m-foot"><button class="btn-bg" onclick="act.closeModal('bag-detail')">關閉</button></div></div></div>
@@ -229,7 +233,7 @@
 <script src="js/modules/shop105.js"></script>
 <script src="js/modules/story105.js"></script> 
 <script src="js/modules/avatar105.js"></script> 
-<script src="js/main105.js?v=10.7"></script>
+<script src="js/main105.js?v=10.9"></script>
 
 <script>
 (function() {

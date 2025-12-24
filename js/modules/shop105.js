@@ -1,9 +1,8 @@
-/* js/modules/shop105.js - V300.90 Complete */
+/* js/modules/shop105.js - V300.95 Final */
 window.act = window.act || {};
 const SHOP_CONFIG = { INFINITE_QTY: 99, MAX_INPUT: 99999, PERM_TYPE: { DAILY: 'daily', ONCE: 'once' }, CATEGORY: { CALORIE: '熱量', MONEY: '金錢', TIME: '時間', OTHER: '其他' } };
 
 Object.assign(window.act, {
-    // 供 core.js 呼叫的介面更新函式
     shopUploadChange: () => {
         const c = document.getElementById('up-cat').value; 
         const dyn = document.getElementById('up-dyn-fields');
@@ -88,8 +87,7 @@ Object.assign(window.act, {
 
     openUpload: () => { 
         TempState.editShopId = null; 
-        // 確保 core.js 的 clearInputs 存在，或手動清除
-        document.querySelectorAll('#m-upload input, #m-upload textarea').forEach(e => e.value='');
+        ['up-name', 'up-desc', 'up-price', 'up-qty'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('up-dyn-fields').innerHTML = ''; 
         document.getElementById('btn-del-shop').style.display = 'none'; 
         
@@ -108,7 +106,15 @@ Object.assign(window.act, {
         if (cat === '金錢') val = document.getElementById('up-money')?.value || 0;
         if (cat === '時間') { const h = document.getElementById('up-time-h')?.value.padStart(2,'0')||'00'; const m = document.getElementById('up-time-m')?.value.padStart(2,'0')||'00'; val = `${h}:${m}`; }
         const item = { id: TempState.editShopId || act.generateId('user_shop'), name: n, price: Number(p), qty: Number(document.getElementById('up-qty').value)||1, category: cat, perm: document.getElementById('up-perm').value, desc: document.getElementById('up-desc').value, val: val };
-        if (TempState.editShopId) { const idx = GlobalState.shop.user.findIndex(i => i.id === TempState.editShopId); if (idx > -1) GlobalState.shop.user[idx] = item; } else { GlobalState.shop.user.push(item); }
+        
+        // ★ 核心修復：正確寫入 user shop ★
+        if (TempState.editShopId) { 
+            const idx = GlobalState.shop.user.findIndex(i => i.id === TempState.editShopId); 
+            if (idx > -1) GlobalState.shop.user[idx] = item; 
+        } else { 
+            GlobalState.shop.user.push(item); 
+        }
+        
         act.closeModal('upload'); act.save();
         if(window.view && view.renderShop) view.renderShop();
     },

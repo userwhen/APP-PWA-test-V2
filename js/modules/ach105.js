@@ -1,4 +1,4 @@
-/* js/modules/ach105.js - V300.80 Fixed */
+/* js/modules/ach105.js - V300.95 Final */
 window.act = window.act || {};
 
 Object.assign(window.act, {
@@ -61,7 +61,7 @@ Object.assign(window.act, {
         
         act.closeModal('create-ach'); 
         act.save();
-        if(window.view && view.renderTasks) view.renderTasks(); // 重新渲染列表
+        if(window.view && view.renderTasks) view.renderTasks(); 
     },
     
     manageAchievement: (id) => { 

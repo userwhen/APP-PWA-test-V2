@@ -1,10 +1,9 @@
-/* js/core105.js - V300.90 Final Fixed */
+/* js/core105.js - V300.95 Final */
 
 const act = {
     alert: (msg) => alert(msg), 
     confirm: (msg, cb) => { if(confirm(msg)) cb(true); },
     prompt: (msg, def, cb) => { const r = prompt(msg, def); if(r!==null) cb(r); },
-    
     generateId: (prefix='id') => prefix + '_' + Date.now() + Math.random().toString(36).substr(2, 9),
     
     clearInputs: (parentId) => {
@@ -20,7 +19,6 @@ const act = {
     },
 
     navigate: (p) => { 
-        // 強制關閉所有可能開啟的頁面
         document.querySelectorAll('.page, #page-story, #page-avatar').forEach(e => e.classList.remove('active')); 
         document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active')); 
         
@@ -68,11 +66,10 @@ const act = {
             });
             if(rustedCount > 0) msg += `\n⚠️ ${rustedCount} 個技能生疏了！`;
 
-            // 重置任務與庫存
+            // 重置
             GlobalState.tasks.forEach(t => { if(t.cat === '每日') { t.done = false; t.curr = 0; } });
             GlobalState.shop.npc.forEach(i => { if(i.perm === 'daily') i.qty = 99; });
             GlobalState.cal.today = 0; 
-            GlobalState.cal.logs = [];
             
             act.updateLoginAchievement();
             act.alert(msg);
@@ -90,21 +87,18 @@ const act = {
         ach.desc = `目前連續: ${GlobalState.loginStreak} 天 (目標: 7天)`;
     },
 
-    // 模擬跨日 (Debug)
     debugDay: () => {
         const d = new Date();
-        d.setDate(d.getDate() + 1); // 加一天
-        GlobalState.lastLoginDate = "1990-01-01"; // 強制重置日期
-        act.checkDaily();
-        act.closeModal('settings');
-        view.renderHUD();
+        d.setDate(d.getDate() - 1); // 設為昨天
+        GlobalState.lastLoginDate = d.toISOString().split('T')[0];
+        act.alert("時光倒流... (請重新整理頁面觸發跨日)");
+        act.save();
     },
 
-    openPayment: () => act.openModal('payment'),
     submitPayment: (amount) => {
         act.alert(`系統連線中...\n成功儲值 ${amount} 元！\n獲得 ${amount} 付費鑽石。`);
-        GlobalState.paidGem = (GlobalState.paidGem || 0) + amount;
-        GlobalState.gold += amount * 10; 
+        GlobalState.paidGem = (GlobalState.paidGem || 0) + amount; // 修正：加到鑽石
+        GlobalState.gold += amount * 10; // 贈送金幣
         act.closeModal('payment');
         act.save();
         view.renderHUD();
@@ -117,23 +111,67 @@ const act = {
             return;
         }
         
+        // 建立新任務 (重置 ID)
+        TempState.editTaskId = null;
         act.clearInputs('m-create');
-        const catSel = document.getElementById('nt-cat-select');
-        if(catSel) catSel.value = '每日'; // 預設每日
+        document.getElementById('nt-cat-select').value = '每日';
+        document.getElementById('btn-del-task').style.display = 'none'; // 隱藏刪除
         
         document.getElementById('nt-subs').innerHTML = '';
         act.refreshSkillSelect();
         act.openModal('create');
     },
 
+    // ★ 編輯任務 (載入資料) ★
+    editTask: (id) => {
+        const t = GlobalState.tasks.find(x => x.id === id);
+        if(!t) return;
+        
+        TempState.editTaskId = id;
+        act.openModal('create');
+        
+        document.getElementById('nt-title').value = t.title;
+        document.getElementById('nt-desc').value = t.desc;
+        document.getElementById('nt-cat-select').value = t.cat;
+        document.getElementById('nt-type').value = t.type;
+        document.getElementById('nt-target').value = t.target;
+        act.toggleTaskType(t.type);
+        
+        document.getElementById('nt-diff-range').value = t.difficulty;
+        act.updateDiffLabel(t.difficulty);
+        
+        act.refreshSkillSelect();
+        document.getElementById('nt-skill-select').value = t.skill || '';
+        
+        document.getElementById('nt-pinned').checked = t.pinned;
+        document.getElementById('nt-deadline').value = t.deadline || '';
+        
+        // 子任務載入
+        const subBox = document.getElementById('nt-subs');
+        subBox.innerHTML = '';
+        if(t.subs) {
+            t.subs.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'row row-center mt-sm';
+                row.innerHTML = `<input class="inp flex-1 mb-0 sub-task-input" value="${s.text}"><button class="btn-del btn-icon-flat" style="color:#d32f2f; margin-left:5px;" onclick="this.parentElement.remove()">✕</button>`;
+                subBox.appendChild(row);
+            });
+        }
+        
+        // 顯示刪除按鈕
+        document.getElementById('btn-del-task').style.display = 'block';
+    },
+
     refreshSkillSelect: () => {
         const sel = document.getElementById('nt-skill-select');
         if(!sel) return;
+        const currentVal = sel.value; // 保留當前值
         sel.innerHTML = '<option value="" disabled selected>選擇技能標籤...</option>';
         GlobalState.skills.forEach(s => {
             const attrName = GlobalState.attrs[s.parent] ? GlobalState.attrs[s.parent].name : '未知';
             sel.innerHTML += `<option value="${s.name}">${s.name} (${attrName})</option>`;
         });
+        if(currentVal) sel.value = currentVal;
     },
 
     updateDiffLabel: (val) => {
@@ -157,7 +195,7 @@ const act = {
         const diffVal = parseInt(document.getElementById('nt-diff-range').value) || 2; 
         const skillName = document.getElementById('nt-skill-select').value; 
         const catSelect = document.getElementById('nt-cat-select').value;
-        const subRule = document.getElementById('nt-sub-rule').value; // all or any
+        const subRule = document.getElementById('nt-sub-rule').value; 
         const typeSelect = document.getElementById('nt-type').value;
         
         let targetVal = 1;
@@ -166,8 +204,8 @@ const act = {
             if(targetVal > 99) targetVal = 99;
         }
         
-        const newTask = {
-            id: act.generateId('task'),
+        const taskObj = {
+            id: TempState.editTaskId || act.generateId('task'),
             title: title,
             desc: document.getElementById('nt-desc').value,
             type: typeSelect,
@@ -187,10 +225,22 @@ const act = {
 
         const subInputs = document.querySelectorAll('#nt-subs input');
         subInputs.forEach(inp => {
-            if(inp.value.trim()) newTask.subs.push({ text: inp.value.trim(), done: false });
+            if(inp.value.trim()) taskObj.subs.push({ text: inp.value.trim(), done: false });
         });
 
-        GlobalState.tasks.unshift(newTask);
+        // 如果是編輯模式，替換舊任務
+        if (TempState.editTaskId) {
+            const idx = GlobalState.tasks.findIndex(t => t.id === TempState.editTaskId);
+            if (idx > -1) {
+                // 保留完成狀態
+                taskObj.done = GlobalState.tasks[idx].done;
+                taskObj.curr = GlobalState.tasks[idx].curr;
+                GlobalState.tasks[idx] = taskObj;
+            }
+        } else {
+            GlobalState.tasks.unshift(taskObj);
+        }
+
         act.save();
         act.closeModal('create');
         view.renderTasks();
@@ -226,12 +276,11 @@ const act = {
                     skill.isRusted = false;
                     const parentAttr = GlobalState.attrs[skill.parent];
                     
-                    // ★ 運動任務扣除熱量 ★
+                    // 運動扣熱量
                     if (GlobalState.settings.calMode && parentAttr.name === '體能') {
-                        // 簡單計算：基礎熱量 * 難度
                         const burn = t.difficulty * 50; 
                         GlobalState.cal.today = Math.max(0, GlobalState.cal.today - burn);
-                        attrMsg += ` | 🔥 消耗 ${burn} cal`;
+                        attrMsg += ` | 🔥 -${burn} cal`;
                     }
 
                     if(parentAttr) {
@@ -280,18 +329,14 @@ const act = {
         div.appendChild(row);
     },
     
-    // ★ 子任務自動完成主任務邏輯 ★
     toggleSubtask: (tid, sIdx) => {
         const t = GlobalState.tasks.find(x => x.id === tid);
         if(t && t.subs[sIdx]) { 
             t.subs[sIdx].done = !t.subs[sIdx].done; 
             
-            // 檢查是否所有子任務已完成
+            // 自動完成判斷
             const allDone = t.subs.every(s => s.done);
             const anyDone = t.subs.some(s => s.done);
-            
-            // 如果規則是 'all' 且全部完成，或者規則是 'any' 且至少一個完成
-            // 自動完成主任務 (但前提是主任務還沒完成)
             if (!t.done) {
                 if (t.subRule === 'all' && allDone) act.toggleTask(tid);
                 else if (t.subRule === 'any' && anyDone) act.toggleTask(tid);
@@ -311,14 +356,16 @@ const act = {
         act.closeModal('settings');
         act.alert("設定已儲存");
         if(window.act.changeMode) window.act.changeMode(mode);
-        view.render();
+        view.render(); // 重新渲染以隱藏/顯示卡路里
     },
     
     deleteTask: (id) => {
-        act.confirm("確定刪除?", (yes) => {
+        act.confirm("確定刪除此任務?", (yes) => {
             if(yes) {
                 GlobalState.tasks = GlobalState.tasks.filter(t => t.id !== id);
                 act.save();
+                // 如果是在編輯視窗中刪除，關閉視窗
+                act.closeModal('create');
                 view.renderTasks();
             }
         });
@@ -336,7 +383,6 @@ const act = {
 
     save: () => { if(!window.isResetting) localStorage.setItem('SQ_V103', JSON.stringify(GlobalState)); },
     navToHistory: () => act.navigate('history'),
-    editTask: (id) => act.alert("請先刪除再重建"), 
     showQA: () => act.alert("Q&A 功能開發中"),
     
     openStats: () => { act.navigate('stats'); },

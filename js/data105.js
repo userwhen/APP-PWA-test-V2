@@ -1,4 +1,4 @@
-/* js/data105.js - V300.70 Login Streak */
+/* js/data105.js - V300.95 Final */
 
 const DefaultData = {
     gold: 100,
@@ -6,10 +6,8 @@ const DefaultData = {
     paidGem: 0,
     lv: 1,
     exp: 0,
-    
-    // ★ 簽到系統變數 ★
-    loginStreak: 0, // 連續登入天數
-    lastLoginDate: "", // 最後登入日期 YYYY-MM-DD
+    loginStreak: 0, 
+    lastLoginDate: "", 
 
     attrs: {
         str: { name: '體能', v: 1, exp: 0, icon: '💪' }, 
@@ -45,10 +43,11 @@ const DefaultData = {
     
     cal: { today: 0, logs: [], date: "" },
     
+    // 預設分類
     cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義
+// 難度定義 (去除代碼)
 const DIFFICULTY_DEFS = {
     1: { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
     2: { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
@@ -57,4 +56,4 @@ const DIFFICULTY_DEFS = {
 };
 
 let GlobalState = JSON.parse(JSON.stringify(DefaultData));
-let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task' };
+let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task', editTaskId: null, editShopId: null, editAchId: null };

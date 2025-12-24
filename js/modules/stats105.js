@@ -1,4 +1,4 @@
-/* js/modules/stats105.js - V300.90 Final */
+/* js/modules/stats105.js - V300.95 Final */
 window.act = window.act || {};
 
 Object.assign(window.act, {
@@ -11,18 +11,10 @@ Object.assign(window.act, {
     submitNewSkill: () => {
         const name = document.getElementById('new-skill-name').value.trim();
         const attr = document.getElementById('new-skill-attr').value;
-        
         if(!name) return act.alert("請輸入技能名稱");
         if(GlobalState.skills.find(s => s.name === name)) return act.alert("技能名稱重複");
         
-        GlobalState.skills.push({
-            name: name,
-            parent: attr,
-            lv: 1,
-            exp: 0,
-            lastUsed: new Date().toISOString()
-        });
-        
+        GlobalState.skills.push({ name: name, parent: attr, lv: 1, exp: 0, lastUsed: new Date().toISOString() });
         act.save();
         act.closeModal('add-skill');
         if(window.view && view.renderStats) view.renderStats();

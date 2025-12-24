@@ -1,4 +1,4 @@
-/* js/view105.js - V300.90 Perfect Render */
+/* js/view105.js - V300.95 Final */
 
 const view = {
     render: () => { 
@@ -10,11 +10,13 @@ const view = {
     renderHUD: () => {
         document.getElementById('ui-gold').innerText = GlobalState.gold; 
         document.getElementById('ui-lv').innerText = GlobalState.lv;
+        document.getElementById('ui-gem').innerText = GlobalState.freeGem || 0;
+        document.getElementById('ui-p-gem').innerText = GlobalState.paidGem || 0;
+        
         const mode = GlobalState.settings.mode;
         document.body.className = 'mode-' + mode;
     },
 
-    // 每日快覽
     renderQuick: () => {
         const list = document.getElementById('quick-list');
         if(!list) return;
@@ -74,7 +76,6 @@ const view = {
             div.className = `t-card ${t.done ? 'done' : ''}`;
             div.style.borderLeft = `5px solid ${diffDef.color}`;
             
-            // 進度條 (顯示文字)
             let progressBar = '';
             if (t.subs && t.subs.length > 0) {
                 const doneCount = t.subs.filter(s => s.done).length;
@@ -93,10 +94,10 @@ const view = {
 
             const countDisplay = t.type === 'count' ? `<span style="font-size:0.8rem;color:#666;margin-left:5px;">(${t.curr}/${t.target})</span>` : '';
             
-            // 管理按鈕
-            const manageBtn = t.isUser ? `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.deleteTask('${t.id}')">🗑️</span>` : '';
+            // ★ 管理按鈕: ⚙️ ★
+            const manageBtn = `<span style="position:absolute; top:10px; right:10px; cursor:pointer; color:#aaa; font-size:1.2rem;" onclick="event.stopPropagation();act.editTask('${t.id}')">⚙️</span>`;
 
-            div.innerHTML = `<div class="t-top"><div class="t-title-container" onclick="act.toggleTask('${t.id}')"><div class="chk ${t.done?'checked':''}"></div><div class="t-title">${t.pinned ? '📌 ' : ''}${t.title}${countDisplay}<div style="margin-top:4px;">${diffBadge} ${skillTag}</div></div></div>${manageBtn}</div>${progressBar}${subList}`;
+            div.innerHTML = `<div class="t-top"><div class="t-title-container" onclick="act.toggleTask('${t.id}')"><div class="chk ${t.done?'checked':''}" onclick="event.stopPropagation(); act.toggleTask('${t.id}')"></div><div class="t-title">${t.pinned ? '📌 ' : ''}${t.title}${countDisplay}<div style="margin-top:4px;">${diffBadge} ${skillTag}</div></div></div>${manageBtn}</div>${progressBar}${subList}`;
             list.appendChild(div);
         });
     },
@@ -107,7 +108,7 @@ const view = {
         GlobalState.achievements.forEach(a => {
             const div = document.createElement('div');
             div.className = `t-card ${a.done?'done':''} ach`;
-            const delBtn = a.isSystem ? '' : `<span style="position:absolute; top:5px; right:5px; color:#aaa; cursor:pointer;" onclick="event.stopPropagation();act.manageAchievement('${a.id}')">✏️</span>`;
+            const delBtn = a.isSystem ? '' : `<span style="position:absolute; top:5px; right:5px; color:#aaa; cursor:pointer;" onclick="event.stopPropagation();act.manageAchievement('${a.id}')">⚙️</span>`;
             
             div.innerHTML = `
                 <div class="t-top">
@@ -142,9 +143,8 @@ const view = {
         items.forEach(i => {
             const div = document.createElement('div'); 
             div.className = `s-item ${i.qty<=0?'sold-out':''}`;
-            // 修復管理按鈕邏輯：npc商品不能刪除
             const isNpc = i.id.startsWith('def_');
-            const manageBtn = isNpc ? '' : `<span class="s-manage-btn" onclick="event.stopPropagation();act.editShopItem('${i.id}')">✏️</span>`;
+            const manageBtn = isNpc ? '' : `<span class="s-manage-btn" onclick="event.stopPropagation();act.editShopItem('${i.id}')">⚙️</span>`;
             
             div.innerHTML = `${manageBtn}<div>${i.name}</div><div style="color:gold">$${i.price}</div><span style="font-size:0.7rem;color:#888;">剩:${i.qty}</span>`;
             div.onclick = () => { if(window.act.buy) window.act.buy(i); };
@@ -173,7 +173,6 @@ const view = {
         const skillList = document.getElementById('skill-list');
         if(skillList) {
             skillList.innerHTML = ''; 
-            // 即使沒技能，若有雷達圖需求也該顯示空白區
             if (GlobalState.skills.length === 0) {
                 skillList.innerHTML = '<div style="color:#888;font-size:0.9rem;">尚無技能</div>';
             } else {
@@ -191,7 +190,7 @@ const view = {
             }
         }
         
-        // 卡路里區塊顯示控制
+        // ★ 卡路里隱藏邏輯 ★
         const calSec = document.getElementById('sec-cal');
         if(calSec) {
             calSec.style.display = GlobalState.settings.calMode ? 'block' : 'none';
