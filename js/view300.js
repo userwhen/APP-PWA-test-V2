@@ -1,4 +1,4 @@
-/* js/view300.js - V300.107 Final View (Fix All) */
+/* js/view300.js - V300.107 Final View */
 
 const view = {
     render: () => { 
@@ -36,7 +36,7 @@ const view = {
             const div = document.createElement('div');
             const diffDef = DIFFICULTY_DEFS[t.difficulty] || DIFFICULTY_DEFS[2];
             div.className = 't-card'; div.style.padding = '12px'; div.style.borderLeft = `5px solid ${diffDef.color}`;
-            div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:bold;font-size:1.1rem;">${t.pinned?'📌 ':''}${t.title}</span><span style="font-size:0.8rem;color:#666;">${t.done?'(已完成)':'(未完成)'}</span></div>`;
+            div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:bold;font-size:1.1rem;">${t.pinned?'📌 ':''}${t.title}</span><button class="btn-xs" style="font-size:1.2rem;">→</button></div>`;
             div.onclick = () => { act.closeModal('quick'); act.navigate('task'); };
             list.appendChild(div);
         });
