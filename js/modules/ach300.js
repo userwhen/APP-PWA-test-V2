@@ -1,4 +1,4 @@
-/* js/modules/ach300.js - V300.99 Fixed */
+/* js/modules/ach300.js - V300.100 (Fix Reward Reversal) */
 window.act = window.act || {};
 
 Object.assign(window.act, {
@@ -15,23 +15,19 @@ Object.assign(window.act, {
         }
     },
     
-    // ★ 修復：正確開啟 m-create-ach ★
     openCreateAch: () => {
         TempState.editAchId = null; 
         act.clearInputs('m-create-ach');
-        
         const rb = document.getElementsByName('ach-src');
         if(rb[0]) rb[0].checked = true;
-        act.toggleAchSource();
-        
+        act.toggleAchSource(); 
         document.getElementById('btn-del-ach').style.display = 'none';
         act.openModal('create-ach');
     },
-    
+
     submitAchievement: () => {
-        const title = document.getElementById('na-title').value; 
+        const title = document.getElementById('na-title').value;
         if (!title) return act.alert("請輸入標題");
-        
         const isSystem = TempState.achSource === 'system';
         const reward = {};
         if (isSystem) {
@@ -41,29 +37,26 @@ Object.assign(window.act, {
             reward.gold = Number(document.getElementById('na-gold').value) || 0;
             reward.exp = Number(document.getElementById('na-exp').value) || 0;
         }
-        
-        const ach = { 
-            id: TempState.editAchId || act.generateId('ach'), 
-            title: title, 
-            desc: document.getElementById('na-desc').value, 
-            type: 'manual', 
-            isSystem: isSystem, 
-            reward: reward, 
-            done: false 
+        const ach = {
+            id: TempState.editAchId || act.generateId('ach'),
+            title: title,
+            desc: document.getElementById('na-desc').value,
+            type: 'manual',
+            isSystem: isSystem,
+            reward: reward,
+            done: false
         };
-        
-        if(TempState.editAchId) { 
-            const idx = GlobalState.achievements.findIndex(a => a.id === TempState.editAchId); 
-            if(idx > -1) { ach.done = GlobalState.achievements[idx].done; GlobalState.achievements[idx] = ach; } 
-        } else { 
-            GlobalState.achievements.push(ach); 
+        if(TempState.editAchId) {
+            const idx = GlobalState.achievements.findIndex(a => a.id === TempState.editAchId);
+            if(idx > -1) { ach.done = GlobalState.achievements[idx].done; GlobalState.achievements[idx] = ach; }
+        } else {
+            GlobalState.achievements.push(ach);
         }
-        
-        act.closeModal('create-ach'); 
+        act.closeModal('create-ach');
         act.save();
-        if(window.view && view.renderTasks) view.renderTasks(); 
+        if(window.view && view.renderTasks) view.renderTasks();
     },
-    
+
     manageAchievement: (id) => { 
         const ach = GlobalState.achievements.find(a => a.id === id); 
         if(!ach) return; 
@@ -85,18 +78,28 @@ Object.assign(window.act, {
         }); 
     },
     
+    // ★ Fix #3: 獎勵發放與回收 ★
     toggleAchievement: (id) => {
         const ach = GlobalState.achievements.find(a => a.id === id);
         if (!ach) return;
+        
         ach.done = !ach.done;
+        
         if (ach.done) {
+            // 發放獎勵
             let msg = "成就解鎖！";
-            if(ach.reward.freeGem) { GlobalState.freeGem += ach.reward.freeGem; msg += ` 💎+${ach.reward.freeGem}`; }
+            if(ach.reward.freeGem) { GlobalState.freeGem = (GlobalState.freeGem||0) + ach.reward.freeGem; msg += ` 💎+${ach.reward.freeGem}`; }
+            if(ach.reward.paidGem) { GlobalState.paidGem = (GlobalState.paidGem||0) + ach.reward.paidGem; msg += ` 💠+${ach.reward.paidGem}`; }
             if(ach.reward.gold) { GlobalState.gold += ach.reward.gold; msg += ` 💰+${ach.reward.gold}`; }
             act.alert(msg);
+        } else {
+            // 回收獎勵
+            if(ach.reward.freeGem) GlobalState.freeGem = Math.max(0, (GlobalState.freeGem||0) - ach.reward.freeGem);
+            if(ach.reward.paidGem) GlobalState.paidGem = Math.max(0, (GlobalState.paidGem||0) - ach.reward.paidGem);
+            if(ach.reward.gold) GlobalState.gold = Math.max(0, GlobalState.gold - ach.reward.gold);
         }
+        
         act.save();
-        view.renderHUD();
-        view.renderTasks();
+        if(window.view) { view.renderHUD(); view.renderTasks(); }
     }
 });

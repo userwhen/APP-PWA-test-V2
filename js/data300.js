@@ -1,18 +1,16 @@
-/* js/data300.js - V300.101 Safe Data */
+/* js/data300.js - V300.99 Phase 1 Data */
 
-// ★ 改用 var 宣告，避免重複載入時報錯 ★
-var DefaultData = {
+const DefaultData = {
+    // === 本體數據 (死亡不重置) ===
     gold: 100,
     freeGem: 0,
     paidGem: 0,
     lv: 1,
     exp: 0,
     
-    // 日期與簽到
     loginStreak: 0, 
     lastLoginDate: "", 
 
-    // 六大屬性
     attrs: {
         str: { name: '體能', v: 1, exp: 0, icon: '💪' }, 
         int: { name: '智慧', v: 1, exp: 0, icon: '🧠' },
@@ -23,13 +21,32 @@ var DefaultData = {
     },
 
     skills: [], 
+    archivedSkills: [], // ★ 新增：技能里程碑 (滿級封存用)
+    
     tasks: [],
     achievements: [],
     history: [],
-    bag: [], 
+    bag: [], // 本體背包
     
-    // V200+V300 整合資料結構
-    story: { hp: 100, maxHp: 100, san: 100, lv: 1, exploreCount: 0, deadCount: 0, unlockedSkip: false },
+    // === 劇情數據 (Roguelike 機制) ===
+    story: {
+        // 角色狀態 (隨時變動)
+        hp: 100,
+        maxHp: 100,
+        san: 100, // 理智值 (擴充用)
+        exploreCount: 0, // 今日探索次數 (控制機率)
+        
+        // 永久紀錄 (死亡保留)
+        hasDied: false,       // 是否死過 (開啟 SKIP)
+        permEvents: [],       // 已完成的永久劇本 ID (如新手教學)
+        
+        // 沙盒紀錄 (死亡歸零)
+        clearedEvents: [],    // 本輪已完成的劇本
+        inventory: [],        // 劇情內撿到的道具
+        relationships: {},    // NPC 好感度
+        progress: 0           // 目前層數/進度
+    },
+
     avatar: { clothes: [], wearing: null },
     wardrobe: [], 
 
@@ -54,13 +71,13 @@ var DefaultData = {
     cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義 (改用 var)
-var DIFFICULTY_DEFS = {
+// 難度定義
+const DIFFICULTY_DEFS = {
     1: { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
     2: { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
     3: { label: '困難', baseGold: 80, baseExp: 60,  color: '#ffb74d' },
     4: { label: '史詩', baseGold: 200, baseExp: 150, color: '#e57373' }
 };
 
-var GlobalState = JSON.parse(JSON.stringify(DefaultData));
-var TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task', wardrobeTab: 'hair' };
+let GlobalState = JSON.parse(JSON.stringify(DefaultData));
+let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task', wardrobeTab: 'hair' };
