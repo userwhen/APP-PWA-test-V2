@@ -1,9 +1,10 @@
-/* js/modules/shop105.js - V300.99 Final Shop */
+/* js/modules/shop300.js - V300.101 Safe Shop */
 window.act = window.act || {};
-const SHOP_CONFIG = { INFINITE_QTY: 99, MAX_INPUT: 99999, PERM_TYPE: { DAILY: 'daily', ONCE: 'once' }, CATEGORY: { CALORIE: '熱量', MONEY: '金錢', TIME: '時間', OTHER: '其他' } };
+
+// ★ 改用 var 宣告 ★
+var SHOP_CONFIG = { INFINITE_QTY: 99, MAX_INPUT: 99999, PERM_TYPE: { DAILY: 'daily', ONCE: 'once' }, CATEGORY: { CALORIE: '熱量', MONEY: '金錢', TIME: '時間', OTHER: '其他' } };
 
 Object.assign(window.act, {
-    // 供 core.js 呼叫的介面更新函式
     shopUploadChange: () => {
         const c = document.getElementById('up-cat').value; 
         const dyn = document.getElementById('up-dyn-fields');
@@ -98,7 +99,6 @@ Object.assign(window.act, {
         act.openModal('upload'); 
     },
 
-    // ★ 關鍵修復：上架商品正確寫入 GlobalState.shop.user ★
     submitUpload: () => {
         const n = document.getElementById('up-name').value; 
         const p = document.getElementById('up-price').value;

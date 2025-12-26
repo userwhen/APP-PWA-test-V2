@@ -3,7 +3,7 @@ const CACHE_NAME = 'sq-v300-cache-v2';
 const urlsToCache = [
   './',
   './index.html',
-  './css/style105.css'
+  './css/style300.css'
   // 如果有多個 JS 檔，建議也列在這裡，或者保持這樣最簡化即可
 ];
 

@@ -1,13 +1,14 @@
-/* js/data105.js - V300.99 Final Data */
+/* js/data300.js - V300.101 Safe Data */
 
-const DefaultData = {
+// ★ 改用 var 宣告，避免重複載入時報錯 ★
+var DefaultData = {
     gold: 100,
     freeGem: 0,
     paidGem: 0,
     lv: 1,
     exp: 0,
     
-    // 簽到與日期系統
+    // 日期與簽到
     loginStreak: 0, 
     lastLoginDate: "", 
 
@@ -25,8 +26,13 @@ const DefaultData = {
     tasks: [],
     achievements: [],
     history: [],
-    bag: [],
+    bag: [], 
     
+    // V200+V300 整合資料結構
+    story: { hp: 100, maxHp: 100, san: 100, lv: 1, exploreCount: 0, deadCount: 0, unlockedSkip: false },
+    avatar: { clothes: [], wearing: null },
+    wardrobe: [], 
+
     shop: {
         npc: [
             { id: 'def_1', name: '🥤 手搖飲', price: 60, category: '熱量', desc: '快樂泉源', val: 500, qty: 99, perm: 'daily' },
@@ -45,18 +51,16 @@ const DefaultData = {
     },
     
     cal: { today: 0, logs: [], date: "" },
-    
-    // 預設分類
     cats: ['每日', '工作', '待辦', '願望'] 
 };
 
-// 難度定義
-const DIFFICULTY_DEFS = {
+// 難度定義 (改用 var)
+var DIFFICULTY_DEFS = {
     1: { label: '簡單', baseGold: 15, baseExp: 10,  color: '#81c784' },
     2: { label: '中等', baseGold: 35, baseExp: 25,  color: '#4db6ac' },
     3: { label: '困難', baseGold: 80, baseExp: 60,  color: '#ffb74d' },
     4: { label: '史詩', baseGold: 200, baseExp: 150, color: '#e57373' }
 };
 
-let GlobalState = JSON.parse(JSON.stringify(DefaultData));
-let TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task' };
+var GlobalState = JSON.parse(JSON.stringify(DefaultData));
+var TempState = { filterCategory: '全部', shopCategory: '全部', taskTab: 'task', wardrobeTab: 'hair' };

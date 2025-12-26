@@ -1,4 +1,4 @@
-/* js/modules/ach105.js - V300.99 Fixed */
+/* js/modules/ach300.js - V300.99 Fixed */
 window.act = window.act || {};
 
 Object.assign(window.act, {

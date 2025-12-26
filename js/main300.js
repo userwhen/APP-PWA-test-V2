@@ -1,9 +1,10 @@
-/* js/main105.js - V10.2 Daily Login Check */
+/* js/main300.js - V300.100 Safe Main */
 
+// ★ V200 關鍵安全鎖 ★
 window.isResetting = false; 
 
 window.forceSaveNow = function() {
-    if (window.isResetting) return;
+    if (window.isResetting) return; // 鎖定中不存檔
     try {
         if (typeof GlobalState !== 'undefined') {
             localStorage.setItem('SQ_V103', JSON.stringify(GlobalState));
@@ -18,6 +19,8 @@ try {
         GlobalState = { ...DefaultData, ...parsed };
         if(parsed.shop) GlobalState.shop = { ...DefaultData.shop, ...parsed.shop };
         if(parsed.attrs) GlobalState.attrs = { ...DefaultData.attrs, ...parsed.attrs };
+        if(!GlobalState.story) GlobalState.story = { ...DefaultData.story }; // 補 Story
+        if(!GlobalState.wardrobe) GlobalState.wardrobe = [];
         if(!GlobalState.history) GlobalState.history = [];
     } else {
         GlobalState = JSON.parse(JSON.stringify(DefaultData));
@@ -27,10 +30,9 @@ try {
 }
 
 if (typeof act !== 'undefined') {
-    // ★ 啟動每日檢查 ★
     if(act.checkDaily) act.checkDaily();
     if(view.render) view.render();
-    if(act.navigate) act.navigate('main');
+    if(act.navigate) act.navigate(GlobalState.settings.mode === 'basic' ? 'stats' : 'main');
 }
 
 // 歷史紀錄
@@ -50,7 +52,7 @@ if (typeof act !== 'undefined') {
 if (typeof act === 'undefined') window.act = {};
 act.resetData = function() {
     if(confirm("【警告】\n確定要刪除所有進度並重置嗎？")) {
-        window.isResetting = true;
+        window.isResetting = true; // 上鎖
         localStorage.clear();
         sessionStorage.clear();
         if ('serviceWorker' in navigator) {
